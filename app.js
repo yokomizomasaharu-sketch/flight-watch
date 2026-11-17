@@ -25,12 +25,21 @@
   ];
   var FILTERS = [
     { k: 'live', l: '開催中' },
+    { k: 'kix', l: '関空発' },
+    { k: 'hnd', l: '羽田発' },
     { k: 'taiwan', l: '台湾' },
     { k: 'asia', l: 'アジア' },
     { k: 'europe', l: 'ヨーロッパ' },
     { k: 'domestic', l: '国内線' },
     { k: 'star', l: '★ウォッチ' }
   ];
+  /* 出発空港での絞り込み（関空発＝関空・伊丹、羽田発＝羽田・成田） */
+  var AIRSET = { kix: ['KIX', 'ITM'], hnd: ['HND', 'NRT'] };
+  function matchesAirport(d, key) {
+    var set = AIRSET[key];
+    if (!set) return false;
+    return (d.fitAirports || []).some(function (a) { return set.indexOf(a) !== -1; });
+  }
   var KIND_FILTERS = [
     { k: 'all', l: 'すべて' },
     { k: 'flight', l: '✈️ 航空券' },
@@ -583,6 +592,7 @@
       var st = dealStatus(d).k;
       if (f === 'star') return !!(state.marks[d.id] && state.marks[d.id].star);
       if (f === 'live') return st === 'live' || st === 'soon';
+      if (f === 'kix' || f === 'hnd') return matchesAirport(d, f);
       if (f === 'all') return true;
       return d.area === f;
     });
@@ -626,11 +636,13 @@
 
   function renderFilters() {
     var list = allDeals();
-    var counts = { all: list.length, live: 0, star: 0 };
+    var counts = { all: list.length, live: 0, star: 0, kix: 0, hnd: 0 };
     list.forEach(function (d) {
       var st = dealStatus(d).k;
       if (st === 'live' || st === 'soon') counts.live++;
       if (state.marks[d.id] && state.marks[d.id].star) counts.star++;
+      if (matchesAirport(d, 'kix')) counts.kix++;
+      if (matchesAirport(d, 'hnd')) counts.hnd++;
       counts[d.area] = (counts[d.area] || 0) + 1;
     });
     $('filterRow').innerHTML = FILTERS.map(function (f) {
