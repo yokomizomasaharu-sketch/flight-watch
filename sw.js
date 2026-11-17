@@ -1,5 +1,5 @@
 /* フライトウォッチ service worker（アプリ本体をキャッシュ、監視データはネット優先） */
-const CACHE = 'flight-watch-20261118024423';
+const CACHE = 'flight-watch-20261118024844';
 const ASSETS = [
   './', './index.html', './app.js', './flight_data.js', './manifest.json',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png',
