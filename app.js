@@ -24,12 +24,11 @@
     { k: 'domestic', l: '国内線' }
   ];
   var FILTERS = [
-    { k: 'all', l: 'すべて' },
+    { k: 'live', l: '開催中' },
     { k: 'taiwan', l: '台湾' },
     { k: 'asia', l: 'アジア' },
     { k: 'europe', l: 'ヨーロッパ' },
     { k: 'domestic', l: '国内線' },
-    { k: 'live', l: '開催中' },
     { k: 'star', l: '★ウォッチ' }
   ];
   var KIND_FILTERS = [
@@ -116,6 +115,12 @@
     var d = parseISO(iso);
     if (!d) return iso || '—';
     return d.getFullYear() + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2);
+  }
+  /* 今年の日付は年を省いて短く出す */
+  function fmtDateSmart(iso) {
+    var d = parseISO(iso);
+    if (!d) return iso || '—';
+    return fmtDate(iso, d.getFullYear() !== new Date().getFullYear());
   }
   function yen(n) {
     if (n == null || n === '' || isNaN(Number(n))) return '—';
@@ -375,10 +380,13 @@
     var btn = $('btnShare');
     btn.classList.toggle('on', state.shareMode);
     btn.setAttribute('aria-pressed', state.shareMode ? 'true' : 'false');
-    btn.textContent = state.shareMode ? '🔓 共有モード解除' : '🔒 共有モード';
+    btn.innerHTML = state.shareMode
+      ? '<span class="si">🔓</span><span class="sl">共有中</span>'
+      : '<span class="si">🔒</span><span class="sl">共有モード</span>';
     $('shareBanner').classList.toggle('hidden', !state.shareMode);
     renderTrips();
     renderSettings();
+    renderWatchHero();
     updatePreview();
     toast(state.shareMode ? '共有モードON：個人情報を隠しました' : '共有モードOFF：通常表示に戻しました');
   }
@@ -457,7 +465,8 @@
     if (name === 'settings') renderSettings();
     if (name === 'trips') renderTrips();
     if (name === 'request') { renderRequests(); updatePreview(); }
-    if (name === 'watch') { renderFilters(); renderDeals(); }
+    if (name === 'watch') { renderFilters(); renderDeals(); renderWatchHero(); }
+    if ($('reqSticky')) $('reqSticky').classList.toggle('hidden', name !== 'request');
   }
 
   /* ============================================================
@@ -473,13 +482,97 @@
     if (p.budget) out.push('<span class="pref-chip">予算 ' + esc(yen(p.budget)) + '</span>');
     var html;
     if (!out.length) {
-      html = '<span class="pref-chip muted">希望条件は未設定 <button class="link-btn" id="prefsGo" style="padding:0 0 0 4px">設定する</button></span>';
+      html = '<button class="pref-chip muted" id="prefsGo">希望条件は未設定 <b>設定する</b></button>';
     } else {
-      html = out.join('') + '<button class="pref-chip muted" id="prefsGo">変更</button>';
+      html = out.join('') + '<button class="pref-chip muted" id="prefsGo"><b>変更</b></button>';
     }
     $('prefsStrip').innerHTML = html;
     var go = $('prefsGo');
-    if (go) go.addEventListener('click', function () { switchTab('settings'); });
+    if (go) go.addEventListener('click', function () { switchTab('settings'); scrollToCard('prefCard'); });
+  }
+
+  /* ---------------- ヒーロー（つぎの予定＋サマリー） ---------------- */
+  function renderWatchHero() {
+    if (!$('heroNextTitle')) return;
+    var today = todayISO();
+    var next = null;
+    sortedTrips().forEach(function (t) {
+      if (!next && (tripDate(t) || '') >= today) next = t;
+    });
+    var titleEl = $('heroNextTitle'), subEl = $('heroNextSub'), chip = $('heroCountdown');
+    var heroEl = $('watchHero');
+    if (heroEl) heroEl.classList.toggle('share', !!state.shareMode);
+    if (state.shareMode) {
+      titleEl.textContent = '共有モード中';
+      subEl.textContent = '予定・控えは表示していません';
+      chip.classList.add('hidden');
+    } else if (next) {
+      var k = tripKindOf(next);
+      var label = k === 'hotel' ? ((next.hotel && (next.hotel.name || next.hotel.area)) || 'ホテル')
+        : (k === 'package' ? routeName(next.from) + ' → ' + routeName(next.to)
+          : (next.flight && next.flight.length <= 12 && next.flight.indexOf('未') === -1 ? next.flight + '　' : '') + routeName(next.from) + ' → ' + routeName(next.to));
+      titleEl.textContent = label;
+      var bits = [fmtDate(tripDate(next), true)];
+      if (next.depTime) bits.push(next.depTime + (next.arrTime ? '→' + next.arrTime : ''));
+      if (k === 'hotel' && next.hotel && next.hotel.checkIn) bits.push((tripNights(next) != null ? tripNights(next) + '泊' : ''));
+      subEl.textContent = bits.filter(Boolean).join(' ・ ');
+      var dd = dayDiff(today, tripDate(next));
+      if (dd != null && dd >= 0) {
+        chip.textContent = dd === 0 ? '今日' : 'あと' + dd + '日';
+        chip.classList.remove('hidden');
+      } else {
+        chip.classList.add('hidden');
+      }
+    } else {
+      titleEl.textContent = '予定はまだない';
+      subEl.textContent = '「予約」タブの ＋追加 から登録できます';
+      chip.classList.add('hidden');
+    }
+
+    var deals = allDeals();
+    var live = deals.filter(function (d) { var s = dealStatus(d).k; return s === 'live' || s === 'soon'; }).length;
+    var fresh = deals.filter(isNew).length;
+    var stars = deals.filter(function (d) { return !!(state.marks[d.id] && state.marks[d.id].star); }).length;
+    $('hsLive').textContent = String(live);
+    $('hsNew').textContent = String(fresh);
+    $('hsStar').textContent = String(stars);
+    Array.prototype.forEach.call(document.querySelectorAll('#watchHero [data-hero]'), function (b) {
+      var k2 = b.getAttribute('data-hero');
+      b.classList.toggle('on', (k2 === 'live' && state.filter === 'live') || (k2 === 'star' && state.filter === 'star'));
+    });
+  }
+
+  function bindHero() {
+    var next = $('heroNext');
+    if (next) next.addEventListener('click', function () {
+      if (state.shareMode) { toast('共有モード中は予定を表示しません', true); return; }
+      switchTab('trips');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('#watchHero [data-hero]'), function (b) {
+      b.addEventListener('click', function () {
+        var k = b.getAttribute('data-hero');
+        if (state.shareMode) { toast('共有モード中は予定を表示しません', true); return; }
+        if (k === 'live') {
+          state.filter = state.filter === 'live' ? 'all' : 'live';
+          persist(); renderFilters(); renderDeals(); renderWatchHero();
+          return;
+        }
+        if (k === 'star') {
+          state.filter = state.filter === 'star' ? 'all' : 'star';
+          persist(); renderFilters(); renderDeals(); renderWatchHero();
+          return;
+        }
+        var first = allDeals().filter(isNew)[0];
+        if (!first) { toast('新着はないよ'); return; }
+        openDeal(first.id);
+      });
+    });
+  }
+
+  function scrollToCard(id) {
+    var el = $(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function filteredDeals() {
@@ -547,46 +640,70 @@
     }).join('');
     Array.prototype.forEach.call($('filterRow').querySelectorAll('.chip'), function (b) {
       b.addEventListener('click', function () {
-        state.filter = b.getAttribute('data-filter');
-        persist(); renderFilters(); renderDeals();
+        var k = b.getAttribute('data-filter');
+        state.filter = state.filter === k ? 'all' : k;
+        persist(); renderFilters(); renderDeals(); renderWatchHero();
       });
     });
     renderKindRow();
+  }
+
+  /* 「羽田−伊丹 片道 9,460円〜」→ 小ラベル＋金額に分ける */
+  function splitPrice(p) {
+    var s = String(p == null ? '' : p).trim();
+    if (!s) return null;
+    if (!/\d/.test(s)) return { label: '', amount: s, note: true };
+    var toks = s.split(/\s+/);
+    if (toks.length > 1) {
+      var last = toks[toks.length - 1];
+      if (/\d/.test(last) && last.length <= 14) {
+        return { label: toks.slice(0, -1).join(' '), amount: last };
+      }
+    }
+    return { label: '', amount: s };
   }
 
   function renderDeals() {
     var list = filteredDeals();
     var box = $('dealList');
     if (!list.length) {
-      box.innerHTML = '<div class="card empty"><span class="big">🌤️</span>この条件に合う監視はまだないよ。<br>「監視を自分で追加」から登録できる。<br><span style="font-size:11px">ホテルやパックも同じリストに追加できます。</span></div>';
+      box.innerHTML = '<div class="card empty"><span class="big">🌤️</span>この条件に合う監視はまだないよ。<br>「監視を追加」から登録できる。<br><span style="font-size:11px">ホテルやパックも同じリストに追加できます。</span></div>';
       return;
     }
     box.innerHTML = list.map(function (d) {
       var st = dealStatus(d);
       var m = state.marks[d.id] || {};
-      var tags = (d.tags || []).slice(0, 4).map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; });
-      fitTags(d).forEach(function (t) { tags.unshift('<span class="tag fit">' + esc(t) + '</span>'); });
-      if (m.status) tags.push('<span class="tag">' + esc(m.status) + '</span>');
       var prod = productOf(d);
+      var tags = (d.tags || []).slice(0, 3).map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; });
+      fitTags(d).slice(0, 1).forEach(function (t) { tags.unshift('<span class="tag fit">' + esc(t) + '</span>'); });
+      if (m.status) tags.push('<span class="tag">' + esc(m.status) + '</span>');
+      var price = splitPrice(d.priceMain);
+      if (price && price.note && d.title && d.title.indexOf(price.amount) !== -1) price = null;
       return '' +
-        '<div class="deal' + (m.star ? ' starred' : '') + '" data-deal="' + esc(d.id) + '">' +
-          (isNew(d) ? '<span class="new-flag">NEW</span>' : '') +
+        '<article class="deal' + (m.star ? ' starred' : '') + '" data-deal="' + esc(d.id) + '" data-prod="' + esc(prod) + '">' +
           '<div class="deal-top">' +
             '<span class="airline-badge" style="--bc:' + esc(d.color || '#334155') + '">' + esc(d.airline) + '</span>' +
             '<span class="pill ' + st.k + '">' + st.l + '</span>' +
+            (isNew(d) ? '<span class="pill new">NEW</span>' : '') +
             (prod !== 'flight' ? '<span class="pill ' + prod + '">' + (prod === 'hotel' ? '🛏 ホテル' : '🧳 パック') + '</span>' : '') +
             (d.custom ? '<span class="pill ended">手動</span>' : '') +
+            '<button class="star-btn' + (m.star ? ' on' : '') + '" data-star="' + esc(d.id) + '" aria-label="ウォッチ">' + (m.star ? '★' : '☆') + '</button>' +
           '</div>' +
-          '<div class="deal-title">' + esc(d.title) + '</div>' +
-          (d.priceMain ? '<div class="deal-price">' + esc(d.priceMain) + '</div>' : '') +
-          (d.priceSub ? '<div class="deal-price-sub">' + esc(d.priceSub) + '</div>' : '') +
+          '<h3 class="deal-title">' + esc(d.title) + '</h3>' +
+          (price ? (price.note
+            ? '<div class="deal-note">' + esc(price.amount) + '</div>'
+            : '<div class="deal-price-row">' +
+              (price.label ? '<div class="deal-price-label">' + esc(price.label) + '</div>' : '') +
+              '<div class="deal-price' + (price.amount.length > 9 ? ' sm' : '') + '">' + esc(price.amount) + '</div>' +
+            '</div>') : '') +
+          (d.priceSub ? '<div class="deal-sub">' + esc(d.priceSub) + '</div>' : '') +
           '<div class="deal-meta">' + esc(periodText(d)) + '</div>' +
           (tags.length ? '<div class="tagrow">' + tags.join('') + '</div>' : '') +
-          '<div class="deal-foot">' +
-            '<button class="star-btn' + (m.star ? ' on' : '') + '" data-star="' + esc(d.id) + '" aria-label="ウォッチ">' + (m.star ? '★' : '☆') + '</button>' +
-            '<button class="detail-btn" data-deal="' + esc(d.id) + '">詳細と予約ページ →</button>' +
+          '<div class="deal-actions">' +
+            '<button class="b2" data-dealquote="' + esc(d.id) + '">📄 見積書</button>' +
+            '<button class="b1" data-dealopen="' + esc(d.id) + '">詳細・予約 →</button>' +
           '</div>' +
-        '</div>';
+        '</article>';
     }).join('');
 
     Array.prototype.forEach.call(box.querySelectorAll('[data-star]'), function (b) {
@@ -596,13 +713,20 @@
         var m = markOf(id);
         m.star = !m.star;
         persist();
-        renderDeals(); renderFilters();
+        renderDeals(); renderFilters(); renderWatchHero();
         updateNewDot();
         toast(m.star ? '★ ウォッチに入れたよ' : '★ を外したよ');
       });
     });
-    Array.prototype.forEach.call(box.querySelectorAll('.detail-btn[data-deal]'), function (b) {
-      b.addEventListener('click', function (ev) { ev.stopPropagation(); openDeal(b.getAttribute('data-deal')); });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-dealopen]'), function (b) {
+      b.addEventListener('click', function (ev) { ev.stopPropagation(); openDeal(b.getAttribute('data-dealopen')); });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-dealquote]'), function (b) {
+      b.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        var d = allDeals().filter(function (x) { return x.id === b.getAttribute('data-dealquote'); })[0];
+        if (d) { markOf(d.id).seen = true; persist(); openQuote({ type: 'deal', deal: d }); }
+      });
     });
     Array.prototype.forEach.call(box.querySelectorAll('.deal[data-deal]'), function (b) {
       b.addEventListener('click', function () { openDeal(b.getAttribute('data-deal')); });
@@ -674,20 +798,25 @@
     else if (d.end) span = '〜' + fmtDate(d.end, true) + 'まで';
     rows.push('<div class="row"><div class="k">期間</div><div class="v">' + esc(span || '—') + '</div></div>');
     if (d.travel) rows.push('<div class="row"><div class="k">対象</div><div class="v">' + esc(d.travel) + '</div></div>');
-    if (d.priceSub) rows.push('<div class="row"><div class="k">運賃目安</div><div class="v">' + esc(d.priceSub) + '</div></div>');
     rows.push('<div class="row"><div class="k">種別</div><div class="v">' + esc(PRODUCT_LABEL[productOf(d)]) + '</div></div>');
     if (d.area && d.area !== 'other') rows.push('<div class="row"><div class="k">エリア</div><div class="v">' + esc(AREA_LABEL[d.area] || d.area) + '</div></div>');
     var conds = (d.conditions || []).map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('');
 
+    var dPrice = splitPrice(d.priceMain);
+    var dProd = productOf(d);
     var html = '' +
       '<div class="card">' +
         '<div class="deal-top">' +
           '<span class="airline-badge" style="--bc:' + esc(d.color || '#334155') + '">' + esc(d.airline) + '</span>' +
           '<span class="pill ' + st.k + '">' + st.l + '</span>' +
+          (dProd !== 'flight' ? '<span class="pill ' + dProd + '">' + (dProd === 'hotel' ? '🛏 ホテル' : '🧳 パック') + '</span>' : '') +
         '</div>' +
         '<div class="deal-title" style="margin-top:6px">' + esc(d.title) + '</div>' +
-        (d.priceMain ? '<div class="deal-price">' + esc(d.priceMain) + '</div>' : '') +
-        (d.priceSub ? '<div class="deal-price-sub">' + esc(d.priceSub) + '</div>' : '') +
+        (dPrice && !dPrice.note ? '<div class="deal-price-row">' +
+          (dPrice.label ? '<div class="deal-price-label">' + esc(dPrice.label) + '</div>' : '') +
+          '<div class="deal-price' + (dPrice.amount.length > 9 ? ' sm' : '') + '">' + esc(dPrice.amount) + '</div></div>' :
+          (d.priceMain ? '<div class="deal-note">' + esc(d.priceMain) + '</div>' : '')) +
+        (d.priceSub ? '<div class="deal-sub">' + esc(d.priceSub) + '</div>' : '') +
         '<div style="margin-top:8px">' + rows.join('') + '</div>' +
         (d.code ? '<div class="code-box"><code>' + esc(d.code) + '</code><button class="mini-btn" id="sheetCopyCode">コピー</button></div>' +
           (d.codeNote ? '<p class="hint">' + esc(d.codeNote) + '</p>' : '') : '') +
@@ -720,7 +849,7 @@
         '<button class="btn-primary" id="sheetSaveMemo" style="margin-top:10px">メモを保存</button>' +
       '</div>';
 
-    openSheet(d.airline || 'セール詳細', html);
+    openSheet(d.airline + ' ／ ' + PRODUCT_LABEL[dProd], html);
 
     var copyCode = $('sheetCopyCode');
     if (copyCode) copyCode.addEventListener('click', function () {
@@ -937,8 +1066,7 @@
       var line = '';
       if (kind !== 'hotel') {
         line = '✈️ ' + esc(t.flight || '便名未定') +
-          (routeCode(t.from) ? '　' + esc(routeCode(t.from) + '→' + routeCode(t.to)) : '') +
-          (t.depTime ? '　' + esc(t.depTime) + (t.arrTime ? ' → ' + esc(t.arrTime) : '') : '');
+          (t.depTime ? '　' + esc(t.depTime) + (t.arrTime ? '→' + esc(t.arrTime) : '') : '');
       }
       var nights = tripNights(t);
       var hName = (t.hotel && (t.hotel.name || t.hotel.area)) || '';
@@ -950,27 +1078,33 @@
         : '';
       var quoteTag = t.quoteNo ? '<span class="tag">見積 ' + esc(t.quoteNo) + '</span>' : '';
       var receiptTag = t.receipt && (t.receipt.amount || t.receipt.issuer) ? '<span class="tag fit">🧾 領収書あり</span>' : '';
+      var expTxt = t.expense === 'business'
+        ? (t.reflected ? '経費（反映済み）' : '経費（未反映）')
+        : (t.expense === 'private' ? 'プライベート' : '経費未設定');
+      var dateIcon = kind === 'hotel' ? '🏨' : (kind === 'package' ? '🧳' : '🗓');
       return '' +
-        '<div class="trip ' + kind + (t.status === 'booked' ? '' : ' planning') + (past ? ' past' : '') + '" data-trip="' + esc(t.id) + '">' +
+        '<article class="trip ' + kind + (t.status === 'booked' ? '' : ' planning') + (past ? ' past' : '') + '" data-trip="' + esc(t.id) + '">' +
           '<div class="trip-top">' +
-            '<span class="trip-date">' + esc(fmtDate(tripDate(t), true)) + '</span>' +
-            '<span style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">' +
+            '<span class="trip-date">' + dateIcon + ' ' + esc(fmtDateSmart(tripDate(t))) + '</span>' +
+            '<span class="trip-tags2">' +
               (kind === 'hotel' ? '<span class="pill hotel">ホテル</span>' : kind === 'package' ? '<span class="pill package">パック</span>' : '') +
-              stat + expenseBadge(t) + '</span>' +
+              stat + '</span>' +
           '</div>' +
           '<div class="trip-route">' + tripTitle(t) + '</div>' +
-          (line ? '<div class="trip-flight">' + line + (Number(t.price) ? '　' + esc(yen(t.price)) : '') + '</div>' : '') +
-          (hotelLine ? '<div class="trip-flight">' + hotelLine + (kind === 'hotel' && Number(t.price) ? '　' + esc(yen(t.price)) : '') + '</div>' : '') +
+          (line ? '<div class="trip-flight">' + line + '</div>' : '') +
+          (hotelLine ? '<div class="trip-flight">' + hotelLine + '</div>' : '') +
+          '<div class="trip-price">' + (Number(t.price) ? esc(yen(t.price)) : '金額未入力') +
+            '<small>' + esc(expTxt) + '</small></div>' +
           (t.ref ? '<div class="trip-ref">予約番号 <b class="' + (refShown ? '' : 'masked') + '">' + esc(refShown ? t.ref : '••••••') + '</b> ' +
-            '<button class="mini-btn" data-reveal="' + esc(refKey) + '" style="min-height:26px;padding:2px 8px">' + (refShown ? '隠す' : '👁 表示') + '</button></div>' : '') +
-          '<div class="trip-tags">' + quoteTag + receiptTag +
-            (t.memo ? '<span class="tag" style="white-space:normal">' + esc(t.memo.length > 60 ? t.memo.slice(0, 60) + '…' : t.memo) + '</span>' : '') + '</div>' +
+            '<button class="mini-btn" data-reveal="' + esc(refKey) + '" style="min-height:26px;padding:0 8px;font-size:10.5px">' + (refShown ? '隠す' : '👁 表示') + '</button></div>' : '') +
+          (quoteTag || receiptTag ? '<div class="trip-tags">' + quoteTag + receiptTag + '</div>' : '') +
+          (t.memo ? '<div class="trip-memo"><span class="tm">' + esc(t.memo) + '</span></div>' : '') +
           '<div class="trip-actions">' +
             '<button class="mini-btn accent" data-receipt="' + esc(t.id) + '">🧾 領収書を見る</button>' +
             '<button class="mini-btn" data-tripquote="' + esc(t.id) + '">📄 見積書</button>' +
             '<button class="mini-btn" data-trippedit="' + esc(t.id) + '">編集</button>' +
           '</div>' +
-        '</div>';
+        '</article>';
     }).join('');
 
     Array.prototype.forEach.call($('tripList').querySelectorAll('[data-trippedit]'), function (b) {
@@ -1718,6 +1852,14 @@
       : r.policy === 'quote'
         ? '「見積書を発行して確認後に予約」：内訳つきの見積書を見せて、OKをもらってから予約します。'
         : '「確認カードを出す」：候補と金額を見て、決済は自分で判断します。';
+    // 非表示のステップを飛ばして番号を振り直す
+    var n = 0;
+    Array.prototype.forEach.call(document.querySelectorAll('#pane-request .step'), function (st) {
+      if (st.classList.contains('hidden')) return;
+      n += 1;
+      var b = st.querySelector('.step-n');
+      if (b) b.textContent = String(n);
+    });
   }
 
   function saveRequest(r) {
@@ -1801,21 +1943,19 @@
     }
     $('reqList').innerHTML = list.map(function (r) {
       var k = r.kind || 'flight';
-      var title = k === 'hotel' ? ('🛏 ' + (r.city || 'ホテル') + '／' + (r.guests || '1') + '名')
-        : (k === 'package' ? '🧳 ' : '') + placeText(r.from) + ' → ' + placeText(r.to) + '／' + (r.type === 'oneway' ? '片道' : '往復');
+      var icon = k === 'hotel' ? '🛏' : (k === 'package' ? '🧳' : '✈️');
+      var title = k === 'hotel' ? ((r.city || 'ホテル') + '／' + (r.guests || '1') + '名')
+        : placeText(r.from) + ' → ' + placeText(r.to) + '／' + (r.type === 'oneway' ? '片道' : '往復');
       var meta = [requestPeriodText(r)];
       if (k === 'hotel') { if (r.hotelBudget) meta.push('1泊 ' + yen(r.hotelBudget)); }
       else if (r.budget) meta.push('予算 ' + yen(r.budget));
       if (k !== 'hotel') meta.push(r.time);
-      meta.push(r.policy === 'auto' ? '自動予約' : r.policy === 'quote' ? '見積後に予約' : '確認カード');
-      meta.push(r.payMode === 'conv' ? 'コンビニ払い' : 'カード');
-      if (r.expense) meta.push('経費');
       return '' +
         '<div class="req" data-req="' + esc(r.id) + '">' +
-          '<div class="req-top"><div class="req-title">' + esc(title) + '</div>' + statusPillOf(r.status) + '</div>' +
-          '<div class="req-meta">' + esc(meta.join(' ／ ')) + '</div>' +
+          '<div class="req-top"><div class="req-title">' + icon + ' ' + esc(title) + '</div>' + statusPillOf(r.status) + '</div>' +
+          '<div class="req-meta">' + esc(meta.join(' ・ ')) + '</div>' +
           '<div class="req-actions">' +
-            '<button class="mini-btn accent" data-reqcopy="' + esc(r.id) + '">📋 依頼文</button>' +
+            '<button class="mini-btn accent" data-reqcopy="' + esc(r.id) + '">📋 依頼文をコピー</button>' +
             '<button class="mini-btn" data-reqquote="' + esc(r.id) + '">📄 見積書</button>' +
             '<button class="mini-btn" data-reqedit="' + esc(r.id) + '">編集</button>' +
             '<button class="mini-btn" data-reqstatus="' + esc(r.id) + '">状態</button>' +
@@ -1970,6 +2110,7 @@
     $('passIssued').value = p.issued || '';
     $('passCountry').value = p.country || '';
     $('btnTogglePass').textContent = state.showPass ? '番号を隠す' : '番号を表示';
+    if ($('tilePass')) renderSetTiles();
   }
 
   function savePassport() {
@@ -2037,6 +2178,7 @@
     $('convStore').value = state.payment.conv.store || CONV_STORES[0];
     $('convMemo').value = state.payment.conv.memo || '';
     renderPayOptions();
+    if ($('tilePass')) renderSetTiles();
   }
 
   function addCard() {
@@ -2058,8 +2200,29 @@
     toast('カードを登録しました');
   }
 
+  function renderSetTiles() {
+    if (!$('tilePass')) return;
+    var p = state.passport || {};
+    var tp = $('tilePass');
+    if (!p.expiry) {
+      tp.textContent = '未登録';
+      tp.parentNode.classList.remove('warn', 'danger');
+    } else {
+      var days = dayDiff(todayISO(), p.expiry);
+      tp.textContent = days < 0 ? '期限切れ' : '残り' + days + '日';
+      tp.parentNode.classList.toggle('danger', days < 92);
+      tp.parentNode.classList.toggle('warn', days >= 92 && days < 183);
+    }
+    var cards = (state.payment.cards || []).length;
+    var conv = state.payment.conv.store && state.payment.conv.store !== CONV_STORES[0];
+    $('tilePay').textContent = cards ? cards + '枚' + (conv ? '＋コンビニ' : '') : (conv ? 'コンビニのみ' : '0枚');
+    $('tileMile').textContent = (state.mileage.length || 0) + '件';
+    $('tileLock').textContent = state.lock.hash ? (state.unlocked ? '解除中' : 'ロック中') : '未設定';
+  }
+
   function renderMileage() {
     var list = state.mileage;
+    if ($('tilePass')) renderSetTiles();
     if (!list.length) {
       $('mileageList').innerHTML = '<div class="empty" style="padding:14px 0">まだ登録されていないよ。下から追加できる。</div>';
       return;
@@ -2107,6 +2270,7 @@
   function renderLock() {
     var on = !!state.lock.hash;
     $('lockState').textContent = on ? (state.unlocked ? '解除中' : 'ロック中') : '未設定';
+    if ($('tilePass')) renderSetTiles();
     if (!on) {
       $('lockBody').innerHTML = '' +
         '<div class="two-col">' +
@@ -2182,8 +2346,8 @@
   function renderSettings() {
     var g = gateFor('settings');
     var hideSensitive = g !== 'ok';
-    ['passCard', 'payCard', 'mileCard', 'lockCard'].forEach(function (id) {
-      $(id).classList.toggle('hidden', hideSensitive);
+    ['passCard', 'payCard', 'mileCard', 'lockCard', 'setTiles'].forEach(function (id) {
+      if ($(id)) $(id).classList.toggle('hidden', hideSensitive);
     });
     $('settingsLocked').classList.toggle('hidden', !hideSensitive);
     if (hideSensitive) {
@@ -2195,6 +2359,7 @@
       renderCards();
       renderMileage();
       renderLock();
+      renderSetTiles();
     }
     renderPrefChips();
     renderPayOptions();
@@ -2241,6 +2406,10 @@
     $('btnAddDeal').addEventListener('click', openDealForm);
     $('btnAddTrip').addEventListener('click', function () { openTripForm(null); });
     $('btnCopyExpenses').addEventListener('click', copyExpenses);
+    bindHero();
+    Array.prototype.forEach.call(document.querySelectorAll('#setTiles [data-goto]'), function (b) {
+      b.addEventListener('click', function () { scrollToCard(b.getAttribute('data-goto')); });
+    });
 
     // リクエストフォーム
     ['reqDepart', 'reqReturn', 'reqFrom', 'reqTo', 'reqTime', 'reqAirline', 'reqBudget', 'reqMemo', 'reqExpense',
@@ -2254,7 +2423,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('input[name="reqType"], input[name="reqPolicy"], input[name="reqPay"], input[name="reqKind"]'), function (el) {
       el.addEventListener('change', updatePreview);
     });
-    $('btnReqCopy').addEventListener('click', function () {
+    var startRequest = function () {
       var r = readReqForm();
       var saved = saveRequest(r);
       state.editingRequest = saved.id;
@@ -2271,7 +2440,17 @@
           '／支払い' + payText(r) + '／座席' + (r.seat || '指定なし') + '／荷物' + (r.baggage || '指定なし') +
           (r.expense ? '／経費計上' : '') + '。チャットに貼られてきたらこの条件で監視を開始してください。');
       }, function () { toast('コピーできませんでした', true); });
-    });
+    };
+    $('btnReqCopy').addEventListener('click', startRequest);
+    if ($('btnReqCopy2')) $('btnReqCopy2').addEventListener('click', startRequest);
+    // 依頼文ボタンが見えているときは固定ボタンを隠す（重複を防ぐ）
+    if ('IntersectionObserver' in window && $('reqSticky')) {
+      var io = new IntersectionObserver(function (entries) {
+        var seen = entries[0] && entries[0].isIntersecting;
+        $('reqSticky').classList.toggle('hidden', !!seen || state.activeTab !== 'request');
+      }, { threshold: 0.5 });
+      io.observe($('btnReqCopy'));
+    }
     $('btnReqQuote').addEventListener('click', function () {
       var r = readReqForm();
       var saved = saveRequest(r);
@@ -2382,6 +2561,7 @@
     renderPrefsStrip();
     renderFilters();
     renderDeals();
+    renderWatchHero();
     renderQuickLinks();
     renderTrips();
     clearReqForm();
@@ -2389,8 +2569,8 @@
     updateNewDot();
     var upd = FEED.updatedAt ? parseISO(FEED.updatedAt) : null;
     $('updatedAt').textContent = upd
-      ? '最終更新 ' + fmtDate(FEED.updatedAt, true) + ' ' + ('0' + upd.getHours()).slice(-2) + ':' + ('0' + upd.getMinutes()).slice(-2) + ' ／ 監視 ' + allDeals().length + '件'
-      : '監視 ' + allDeals().length + '件';
+      ? '最終更新 ' + fmtDate(FEED.updatedAt, false) + ' ' + ('0' + upd.getHours()).slice(-2) + ':' + ('0' + upd.getMinutes()).slice(-2) + '・監視' + allDeals().length + '件'
+      : '監視' + allDeals().length + '件';
   }
   function setShareModeInit() {
     if (state.shareMode) {

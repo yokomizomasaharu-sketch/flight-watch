@@ -7,174 +7,264 @@
 <style>
   :root {
     box-sizing: border-box;
-    --accent: #0f6cbd;
-    --accent-soft: #e6f1fb;
-    --line: var(--pickle-border-hairline, #e5e7eb);
-    --ink: var(--pickle-text-primary, #111827);
-    --ink-2: var(--pickle-text-secondary, #6b7280);
-    --ink-3: var(--pickle-text-tertiary, #9ca3af);
+    --accent: #0f62d6;
+    --accent-2: #0b47a8;
+    --accent-soft: #eaf1fe;
+    --line: var(--pickle-border-hairline, #e6e8ec);
+    --line-2: #eef0f3;
+    --ink: var(--pickle-text-primary, #101828);
+    --ink-2: var(--pickle-text-secondary, #5b6472);
+    --ink-3: var(--pickle-text-tertiary, #98a1ae);
     --card: var(--pickle-surface-card, #ffffff);
-    --page: var(--pickle-surface-page, #f6f7f9);
-    --fill: var(--pickle-surface-fill-faint, #f1f3f5);
-    --radius: var(--pickle-radius-card, 14px);
-    --ok: #15803d;
-    --ok-soft: #e8f6ed;
-    --warn: #b45309;
-    --warn-soft: #fdf3e3;
-    --danger: #b91c1c;
-    --danger-soft: #fdecec;
+    --page: var(--pickle-surface-page, #f4f5f7);
+    --fill: var(--pickle-surface-fill-faint, #f2f4f7);
+    --radius: 16px;
+    --shadow: 0 1px 2px rgba(16,24,40,.04), 0 2px 8px rgba(16,24,40,.05);
+    --ok: #067647;
+    --ok-soft: #e7f6ef;
+    --warn: #a15c07;
+    --warn-soft: #fdf3e4;
+    --danger: #b42318;
+    --danger-soft: #feeceb;
     --gold: #a16207;
+    --purple: #6d28d9;
+    --purple-soft: #f2ecfe;
+    --teal: #0f766e;
+    --teal-soft: #e6f6f5;
   }
   *, *:before, *:after { box-sizing: inherit; }
   html, body { margin: 0; padding: 0; }
   body {
     background: var(--page);
     color: var(--ink);
-    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Segoe UI", Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", "Noto Sans JP", "Segoe UI", Roboto, "Liberation Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
     -webkit-text-size-adjust: 100%;
-    padding: 14px 14px calc(84px + env(safe-area-inset-bottom, 0px));
+    padding: 12px 14px calc(96px + env(safe-area-inset-bottom, 0px));
     font-size: 14px;
-    line-height: 1.45;
+    line-height: 1.5;
     overflow-x: hidden;
   }
   h1, h2, h3, p { margin: 0; }
-  button { font-family: inherit; }
+  button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
   a { color: var(--accent); }
   .hidden { display: none !important; }
 
-  /* ---------- ヘッダー ---------- */
-  .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
-  .hdr-main { min-width: 0; }
-  .title { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
-  .subtitle { font-size: 11.5px; color: var(--ink-2); margin-top: 3px; }
-  .hdr-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+  /* ---------- アプリバー ---------- */
+  .appbar { display: flex; align-items: center; gap: 9px; margin: 2px 0 12px; }
+  .logo {
+    flex: none; width: 34px; height: 34px; border-radius: 10px;
+    background: linear-gradient(140deg, #2b82f0, #0b47a8);
+    display: flex; align-items: center; justify-content: center; font-size: 17px;
+    box-shadow: 0 2px 6px rgba(11,71,168,.28);
+  }
+  .appbar .tt { flex: 1; min-width: 0; }
+  .appbar .t1 { font-size: 15.5px; font-weight: 800; letter-spacing: -0.015em; line-height: 1.25; }
+  .appbar .t2 { font-size: 10.5px; color: var(--ink-3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .share-pill {
+    flex: none; display: inline-flex; align-items: center; gap: 4px;
+    background: var(--card); border: 1px solid var(--line); color: var(--ink-2);
+    padding: 0 10px; height: 32px; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer;
+  }
+  .share-pill.on { background: #101828; border-color: #101828; color: #fff; }
   .close-btn {
     flex: none; background: var(--fill); border: none; color: var(--ink-2);
-    padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 600;
-    min-height: 36px; cursor: pointer;
+    padding: 0 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700;
+    height: 32px; cursor: pointer;
   }
-  .share-btn {
-    flex: none; background: var(--fill); border: 1px solid var(--line); color: var(--ink-2);
-    padding: 7px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700;
-    min-height: 36px; cursor: pointer; white-space: nowrap;
-  }
-  .share-btn.on { background: #111827; border-color: #111827; color: #fff; }
 
-  /* ---------- カード ---------- */
-  .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 14px; margin-bottom: 12px;
+  /* ---------- 共有モードのバナー ---------- */
+  .share-banner {
+    position: sticky; top: 0; z-index: 30;
+    display: flex; align-items: flex-start; gap: 8px;
+    background: #101828; color: #fff; border-radius: 13px;
+    padding: 10px 12px; margin-bottom: 12px;
+    box-shadow: 0 4px 14px rgba(16,24,40,.22);
   }
-  .card-title {
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    font-size: 13.5px; font-weight: 700; margin-bottom: 10px;
-  }
-  .card-title .count { font-size: 11.5px; font-weight: 500; color: var(--ink-2); }
-  .sub-label { font-size: 11.5px; color: var(--ink-2); margin: -4px 0 10px; }
+  .share-banner .sb-ic { font-size: 15px; line-height: 1.3; }
+  .share-banner .sb-tx { font-size: 11.5px; line-height: 1.45; }
+  .share-banner .sb-tx b { display: block; font-size: 12.5px; font-weight: 800; }
+  .share-banner .sb-tx span { color: #cfd6e0; }
 
-  /* ---------- 希望条件ストリップ ---------- */
-  .prefs-strip { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  /* ---------- ヒーロー（つぎの予定・サマリー） ---------- */
+  .hero {
+    background: linear-gradient(145deg, #0b3f92 0%, #1461cf 55%, #2f86f2 100%);
+    color: #fff; border-radius: 18px; padding: 13px 14px 12px;
+    margin-bottom: 12px; box-shadow: 0 8px 22px rgba(11,63,146,.22);
+  }
+  .hero-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .hero-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: .12em; color: rgba(255,255,255,.78); }
+  .hero-chip {
+    font-size: 10.5px; font-weight: 800; color: #fff;
+    background: rgba(255,255,255,.2); border-radius: 999px; padding: 2px 8px;
+  }
+  .hero-next {
+    display: flex; align-items: center; gap: 9px; width: 100%;
+    background: none; border: none; color: #fff; text-align: left;
+    padding: 6px 0 2px; cursor: pointer;
+  }
+  .hero-next .hn-main { flex: 1; min-width: 0; }
+  .hero-next .hn-t { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.25; word-break: break-word; }
+  .hero-next .hn-s { font-size: 11.5px; color: rgba(255,255,255,.86); margin-top: 2px; }
+  .hero-next .hn-go { flex: none; font-size: 18px; opacity: .8; }
+  .hero-next .hn-empty { font-size: 14px; font-weight: 700; }
+  .hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 10px; }
+  .hero-stat {
+    background: rgba(255,255,255,.16); border: none; border-radius: 10px;
+    padding: 4px 4px 5px; color: #fff; text-align: center; cursor: pointer;
+  }
+  .hero-stat b { display: block; font-size: 15.5px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.25; }
+  .hero-stat span { font-size: 9.5px; color: rgba(255,255,255,.9); font-weight: 700; }
+  .hero-stat.on { background: #fff; color: #0b47a8; }
+  .hero-stat.on span { color: #0b47a8; }
+  .hero.share .hero-top, .hero.share .hero-next { display: none; }
+  .hero.share .hero-stats { margin-top: 2px; }
+
+  /* ---------- 希望条件 ---------- */
+  .prefs-strip { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
   .pref-chip {
-    display: inline-flex; align-items: center; gap: 4px;
-    background: var(--accent-soft); color: #0b4a80;
-    border-radius: 999px; padding: 5px 10px; font-size: 11.5px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 3px;
+    background: var(--accent-soft); color: #0a4496;
+    border-radius: 999px; padding: 4px 9px; font-size: 11px; font-weight: 700;
     max-width: 100%; border: none;
   }
-  .pref-chip.muted { background: var(--fill); color: var(--ink-2); font-weight: 500; }
-  .pref-chip .edit { font-weight: 700; text-decoration: underline; }
+  .pref-chip.muted { background: var(--card); color: var(--ink-2); font-weight: 600; border: 1px solid var(--line); }
+  .pref-chip.muted b { color: var(--accent); font-weight: 800; }
 
   /* ---------- フィルター ---------- */
-  .filter-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-  .filter-row.tight { margin-bottom: 12px; }
-  .filter-label { font-size: 10.5px; font-weight: 700; color: var(--ink-3); letter-spacing: .04em; margin: 0 0 5px 2px; }
+  .fbar { margin-bottom: 12px; }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill-row + .pill-row { margin-top: 7px; }
   .chip {
+    display: inline-flex; align-items: center; gap: 3px;
     border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
-    border-radius: 999px; padding: 7px 11px; font-size: 12px; font-weight: 600;
-    cursor: pointer; min-height: 34px; line-height: 1.1;
+    border-radius: 999px; padding: 0 9px; height: 31px; font-size: 11.5px; font-weight: 700;
+    cursor: pointer; white-space: nowrap; line-height: 1; flex: none;
   }
-  .chip.active { background: var(--ink); border-color: var(--ink); color: #fff; }
-  .chip .n { font-weight: 700; opacity: .7; margin-left: 3px; }
+  .chip .n { font-size: 10px; font-weight: 800; color: var(--ink-3); margin-left: 1px; }
+  .chip.active { background: #101828; border-color: #101828; color: #fff; }
+  .chip.active .n { color: rgba(255,255,255,.72); }
+  .pill-row.sub {
+    flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    padding-right: 26px; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 88%, rgba(0,0,0,0));
+    mask-image: linear-gradient(to right, #000 88%, rgba(0,0,0,0));
+  }
+  .pill-row.sub::-webkit-scrollbar { display: none; }
+  .pill-row.sub .chip { height: 29px; padding: 0 10px; font-size: 11px; font-weight: 600; background: rgba(255,255,255,.7); }
+  .pill-row.sub .chip.active { background: var(--accent-soft); border-color: #b9d3fb; color: #0a4496; }
+  .pill-row.sub .chip.active .n { color: #0a4496; }
 
-  /* ---------- 便カード ---------- */
+  /* ---------- カード共通 ---------- */
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow);
+  }
+  .card.compact { padding: 12px 14px; }
+  .filter-label { font-size: 10px; font-weight: 800; color: var(--ink-3); letter-spacing: .06em; margin: 0 0 6px 2px; }
+  .card-title {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    font-size: 13.5px; font-weight: 800; letter-spacing: -0.01em;
+  }
+  .card-title .count { font-size: 11px; font-weight: 600; color: var(--ink-3); }
+  .sub-label { font-size: 11.5px; color: var(--ink-2); margin: 5px 0 0; line-height: 1.5; }
+  .pane-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 2px 10px; }
+  .pane-head h2 { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
+  .lead { font-size: 12px; color: var(--ink-2); margin: 0 2px 12px; line-height: 1.5; }
+
+  /* ---------- セールカード ---------- */
   .deal {
     background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 13px; margin-bottom: 10px; position: relative; cursor: pointer;
+    padding: 12px 13px 11px; margin-bottom: 10px; position: relative; cursor: pointer;
+    box-shadow: var(--shadow); border-left: 3px solid #c7d2e0;
   }
-  .deal:active { background: #fbfcfd; }
-  .deal.starred { border-color: #f0c060; box-shadow: 0 0 0 1px #f7e2b4 inset; }
-  .deal-top { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+  .deal[data-prod="hotel"] { border-left-color: #8b5cf6; }
+  .deal[data-prod="package"] { border-left-color: #14b8a6; }
+  .deal[data-prod="flight"] { border-left-color: #3b82f6; }
+  .deal:active { background: #fbfcfe; }
+  .deal.starred { border-color: #f2cf84; box-shadow: 0 0 0 1px #fbe7bb inset, var(--shadow); }
+  .deal-top { display: flex; align-items: center; gap: 5px; }
   .airline-badge {
-    display: inline-flex; align-items: center; gap: 4px;
+    display: inline-flex; align-items: center;
     background: var(--bc, #334155); color: #fff;
-    border-radius: 6px; padding: 3px 7px; font-size: 10.5px; font-weight: 700;
-    letter-spacing: .02em; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    border-radius: 6px; padding: 2px 7px; font-size: 10px; font-weight: 800;
+    letter-spacing: .02em; max-width: 132px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .pill {
-    display: inline-flex; align-items: center; gap: 3px; border-radius: 999px;
-    padding: 3px 8px; font-size: 10.5px; font-weight: 700; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 2px; border-radius: 999px;
+    padding: 2px 7px; font-size: 10px; font-weight: 800; white-space: nowrap; line-height: 1.5;
   }
   .pill.live { background: var(--ok-soft); color: var(--ok); }
   .pill.soon { background: var(--warn-soft); color: var(--warn); }
   .pill.ended { background: var(--fill); color: var(--ink-3); }
-  .pill.fare { background: var(--accent-soft); color: #0b4a80; }
-  .pill.new { background: #fdecec; color: var(--danger); }
+  .pill.fare { background: var(--accent-soft); color: #0a4496; }
+  .pill.new { background: #feeceb; color: var(--danger); }
   .pill.exp { background: var(--ok-soft); color: var(--ok); }
   .pill.exp-off { background: var(--fill); color: var(--ink-2); }
   .pill.exp-pending { background: var(--warn-soft); color: var(--warn); }
-  .pill.hotel { background: #f3ecff; color: #5b21b6; }
-  .pill.package { background: #e7f7f7; color: #0f766e; }
+  .pill.hotel { background: var(--purple-soft); color: var(--purple); }
+  .pill.package { background: var(--teal-soft); color: var(--teal); }
   .pill.lock { background: var(--danger-soft); color: var(--danger); }
-  .deal-title { font-size: 14.5px; font-weight: 700; line-height: 1.35; letter-spacing: -0.01em; }
-  .deal-price { margin-top: 5px; font-size: 16px; font-weight: 800; color: var(--accent); letter-spacing: -0.02em; }
-  .deal-price-sub { font-size: 11px; color: var(--ink-2); margin-top: 1px; }
-  .deal-meta { font-size: 11.5px; color: var(--ink-2); margin-top: 6px; line-height: 1.4; }
-  .tagrow { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-  .tag { background: var(--fill); color: var(--ink-2); border-radius: 6px; padding: 2px 6px; font-size: 10.5px; font-weight: 600; }
-  .tag.fit { background: var(--ok-soft); color: var(--ok); }
-  .deal-foot { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
   .star-btn {
-    flex: none; width: 40px; height: 36px; border-radius: 10px; border: 1px solid var(--line);
-    background: var(--card); font-size: 17px; line-height: 1; color: var(--ink-3); cursor: pointer;
+    margin-left: auto; flex: none; width: 28px; height: 28px; border-radius: 50%;
+    border: 1px solid var(--line-2); background: var(--fill); font-size: 14px; line-height: 1;
+    color: #b9c1cd; cursor: pointer; display: flex; align-items: center; justify-content: center;
   }
-  .star-btn.on { color: var(--gold); border-color: #f0c060; background: #fffaeb; }
-  .detail-btn {
-    flex: 1; border: none; background: var(--fill); color: var(--ink);
-    border-radius: 10px; min-height: 36px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  .star-btn.on { color: var(--gold); border-color: #f0d9a4; background: #fffaeb; }
+  .deal-title {
+    font-size: 13.5px; font-weight: 700; line-height: 1.42; margin-top: 6px; letter-spacing: -0.01em;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .new-flag {
-    position: absolute; top: -6px; right: 10px; background: var(--danger); color: #fff;
-    font-size: 9.5px; font-weight: 800; padding: 2px 6px; border-radius: 5px; letter-spacing: .06em;
+  .deal-price-row { margin-top: 7px; }
+  .deal-price-label { font-size: 10.5px; color: var(--ink-3); font-weight: 700; }
+  .deal-price { font-size: 21px; font-weight: 800; color: var(--accent); letter-spacing: -0.03em; line-height: 1.2; }
+  .deal-price.sm { font-size: 15px; color: var(--ink); letter-spacing: -0.01em; }
+  .deal-sub { font-size: 11.5px; font-weight: 600; color: var(--ink-2); margin-top: 5px; line-height: 1.45; }
+  .deal-note { font-size: 13px; font-weight: 800; color: var(--ink); margin-top: 6px; line-height: 1.4; letter-spacing: -0.01em; }
+  .deal-price-row + .deal-sub:last-child { margin-top: 4px; }
+  .deal-meta {
+    font-size: 10.5px; color: var(--ink-3); margin-top: 5px; line-height: 1.45;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .empty {
-    text-align: center; color: var(--ink-2); font-size: 12.5px; padding: 26px 10px;
+  .tagrow { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; max-height: 22px; overflow: hidden; }
+  .tag { background: var(--fill); color: var(--ink-2); border-radius: 6px; padding: 2px 6px; font-size: 10px; font-weight: 700; }
+  .tag.fit { background: var(--ok-soft); color: var(--ok); }
+  .deal-actions { display: flex; gap: 7px; margin-top: 10px; }
+  .deal-actions .b2 {
+    flex: 1; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    border-radius: 10px; height: 38px; font-size: 12px; font-weight: 700; cursor: pointer;
   }
+  .deal-actions .b1 {
+    flex: 1.5; border: none; background: var(--accent); color: #fff;
+    border-radius: 10px; height: 38px; font-size: 12.5px; font-weight: 800; cursor: pointer;
+  }
+  .empty { text-align: center; color: var(--ink-2); font-size: 12.5px; padding: 24px 12px; line-height: 1.7; }
   .empty .big { font-size: 26px; display: block; margin-bottom: 6px; }
 
-  /* ---------- ボタン類 ---------- */
+  /* ---------- ボタン ---------- */
   .btn-primary {
     display: block; width: 100%; border: none; background: var(--accent); color: #fff;
-    border-radius: 11px; min-height: 46px; font-size: 14px; font-weight: 700; cursor: pointer;
-    padding: 10px 12px;
+    border-radius: 12px; min-height: 48px; font-size: 14px; font-weight: 800; cursor: pointer;
+    padding: 12px;
   }
-  .btn-primary.alt { background: var(--ink); }
+  .btn-primary.alt { background: #101828; }
   .btn-primary:disabled { background: var(--ink-3); }
   .btn-ghost {
     display: block; width: 100%; border: 1px solid var(--line); background: var(--card); color: var(--ink);
-    border-radius: 11px; min-height: 42px; font-size: 13px; font-weight: 600; cursor: pointer;
+    border-radius: 12px; min-height: 44px; font-size: 12.5px; font-weight: 700; cursor: pointer;
   }
   .btn-row { display: flex; gap: 8px; }
   .btn-row > * { flex: 1; }
   .mini-btn {
     border: 1px solid var(--line); background: var(--card); color: var(--ink-2);
-    border-radius: 9px; padding: 7px 11px; font-size: 11.5px; font-weight: 600; cursor: pointer;
+    border-radius: 9px; padding: 0 11px; font-size: 11.5px; font-weight: 700; cursor: pointer;
     min-height: 32px; white-space: nowrap;
   }
-  .mini-btn.accent { color: var(--accent); border-color: #bfdbfe; background: #f5f9ff; }
-  .mini-btn.danger { color: var(--danger); border-color: #fecaca; background: #fff7f7; }
+  .mini-btn.accent { color: var(--accent); border-color: #c5d9fb; background: #f4f8ff; }
+  .mini-btn.danger { color: var(--danger); border-color: #f6cdc9; background: #fff8f7; }
   .link-btn {
-    border: none; background: none; color: var(--accent); font-size: 12px; font-weight: 600;
-    padding: 6px 0; cursor: pointer; text-decoration: underline;
+    border: none; background: none; color: var(--accent); font-size: 12px; font-weight: 700;
+    padding: 4px 0; cursor: pointer;
   }
 
   /* ---------- フォーム ---------- */
@@ -186,131 +276,187 @@
   .flabel .opt { font-weight: 500; color: var(--ink-3); }
   input[type="text"], input[type="date"], input[type="number"], input[type="tel"], input[type="password"], select, textarea {
     width: 100%; border: 1px solid var(--line); background: var(--card); color: var(--ink);
-    border-radius: 10px; padding: 10px 11px; font-size: 16px; font-family: inherit;
+    border-radius: 11px; padding: 10px 11px; font-size: 16px; font-family: inherit;
     min-height: 44px; -webkit-appearance: none; appearance: none;
   }
-  textarea { min-height: 74px; resize: vertical; line-height: 1.45; }
+  textarea { min-height: 72px; resize: vertical; line-height: 1.5; font-size: 15px; }
   select {
-    background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%), linear-gradient(135deg, #6b7280 50%, transparent 50%);
+    background-image: linear-gradient(45deg, transparent 50%, #7b8493 50%), linear-gradient(135deg, #7b8493 50%, transparent 50%);
     background-position: calc(100% - 16px) 19px, calc(100% - 11px) 19px;
     background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
     padding-right: 30px;
   }
-  input:focus, select:focus, textarea:focus { outline: 2px solid #93c5fd; outline-offset: 0; border-color: var(--accent); }
+  input:focus, select:focus, textarea:focus { outline: 2px solid #9dc4fb; outline-offset: 0; border-color: var(--accent); }
   input:disabled, select:disabled { background: var(--fill); color: var(--ink-2); }
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-  .seg { display: flex; gap: 4px; background: var(--fill); padding: 4px; border-radius: 11px; }
+
+  /* セグメント */
+  .seg { display: flex; gap: 4px; background: var(--fill); padding: 4px; border-radius: 12px; }
   .seg.wrap { flex-wrap: wrap; }
   .seg label {
     flex: 1; text-align: center; font-size: 12px; font-weight: 700; color: var(--ink-2);
-    padding: 8px 4px; border-radius: 8px; cursor: pointer; min-height: 36px; display: flex;
-    align-items: center; justify-content: center; margin: 0; line-height: 1.25;
+    padding: 7px 4px; border-radius: 9px; cursor: pointer; min-height: 38px; display: flex;
+    align-items: center; justify-content: center; margin: 0; line-height: 1.25; white-space: nowrap;
   }
   .seg input { position: absolute; opacity: 0; width: 0; height: 0; }
-  .seg input:checked + span { color: var(--ink); }
-  .seg label:has(input:checked) { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(15,23,42,.12); }
+  .seg label:has(input:checked) { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(15,23,42,.14); }
   .seg.three label { font-size: 11.5px; }
+
+  /* 選択肢カード（進め方など） */
+  .opt-list { display: flex; flex-direction: column; gap: 7px; }
+  .opt-list .opt {
+    display: flex; align-items: flex-start; gap: 9px; margin: 0;
+    border: 1px solid var(--line); border-radius: 12px; padding: 10px 11px; background: var(--card);
+    cursor: pointer; min-height: 48px;
+  }
+  .opt-list .opt input {
+    width: 20px; height: 20px; flex: none; margin: 1px 0 0; accent-color: var(--accent);
+  }
+  .opt-list .opt .ob { min-width: 0; }
+  .opt-list .opt .ot { display: block; font-size: 12.5px; font-weight: 800; line-height: 1.35; }
+  .opt-list .opt .os { display: block; font-size: 10.5px; color: var(--ink-2); margin-top: 1px; line-height: 1.4; }
+  .opt-list .opt:has(input:checked) { border-color: var(--accent); background: #f7fbff; box-shadow: 0 0 0 1px var(--accent) inset; }
+
   .check-row {
     display: flex; align-items: flex-start; gap: 9px; padding: 10px 11px;
-    border: 1px solid var(--line); border-radius: 11px; background: #fcfdff;
+    border: 1px solid var(--line); border-radius: 12px; background: #fcfdff;
   }
   .check-row input[type="checkbox"] {
     width: 22px; height: 22px; flex: none; margin: 0; accent-color: var(--accent);
   }
   .check-row .ct { font-size: 12.5px; font-weight: 700; line-height: 1.35; }
-  .check-row .cs { font-size: 11px; color: var(--ink-2); margin-top: 2px; line-height: 1.35; }
-  .hint { font-size: 11px; color: var(--ink-3); line-height: 1.5; margin-top: 8px; }
+  .check-row .cs { font-size: 10.5px; color: var(--ink-2); margin-top: 2px; line-height: 1.4; }
+  .hint { font-size: 10.5px; color: var(--ink-3); line-height: 1.55; margin-top: 8px; }
   .preview {
-    background: #0f172a; color: #e2e8f0; border-radius: 11px; padding: 11px;
-    font-size: 11.5px; line-height: 1.55; white-space: pre-wrap; word-break: break-word;
-    font-family: ui-monospace, "SF Mono", Menlo, monospace; max-height: 240px; overflow: auto;
+    background: #0f172a; color: #e2e8f0; border-radius: 12px; padding: 11px;
+    font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; max-height: 220px; overflow: auto;
   }
+
+  /* ステップ見出し */
+  .step + .step { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line-2); }
+  .step-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .step-n {
+    flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-soft);
+    color: #0a4496; font-size: 11.5px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  }
+  .step-t { font-size: 13px; font-weight: 800; letter-spacing: -0.01em; }
+  .step-s { font-size: 10.5px; color: var(--ink-3); }
 
   /* ---------- 警告・状態 ---------- */
   .banner {
-    border-radius: 11px; padding: 11px 12px; font-size: 12px; line-height: 1.45;
+    border-radius: 12px; padding: 10px 12px; font-size: 11.5px; line-height: 1.5;
     display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px;
   }
-  .banner .ic { font-size: 15px; line-height: 1.2; }
+  .banner .ic { font-size: 15px; line-height: 1.3; }
   .banner.ok { background: var(--ok-soft); color: #14532d; }
   .banner.warn { background: var(--warn-soft); color: #78350f; }
   .banner.danger { background: var(--danger-soft); color: #7f1d1d; }
-  .banner.info { background: var(--accent-soft); color: #0b4a80; }
+  .banner.info { background: var(--accent-soft); color: #0a4496; }
   .banner b { font-weight: 800; }
-  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 11px; min-width: 0; }
-  .kpi-label { font-size: 10.5px; color: var(--ink-2); }
-  .kpi-value { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; margin-top: 2px; word-break: break-word; }
-  .kpi-value small { font-size: 11px; font-weight: 600; color: var(--ink-2); }
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 11px; min-width: 0; box-shadow: var(--shadow); }
+  .kpi-label { font-size: 10px; color: var(--ink-3); font-weight: 700; }
+  .kpi-value { font-size: 15.5px; font-weight: 800; letter-spacing: -0.02em; margin-top: 0; word-break: break-word; }
+  .kpi-value small { font-size: 11px; font-weight: 700; color: var(--ink-2); }
+  .note {
+    font-size: 10.5px; color: var(--ink-3); line-height: 1.5; margin: 10px 2px 0;
+  }
+  .note b { color: var(--ink-2); }
 
-  /* ---------- 予約済みリスト ---------- */
+  /* ---------- 予約カード ---------- */
   .trip {
-    background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent);
+    background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent);
     border-radius: var(--radius); padding: 12px 13px; margin-bottom: 10px; cursor: pointer;
+    box-shadow: var(--shadow);
   }
   .trip.planning { border-left-color: #cbd5e1; }
-  .trip.hotel { border-left-color: #7c3aed; }
-  .trip.package { border-left-color: #0f766e; }
-  .trip.past { opacity: .6; }
+  .trip.hotel { border-left-color: #8b5cf6; }
+  .trip.package { border-left-color: #14b8a6; }
+  .trip.past { opacity: .55; }
   .trip-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .trip-date { font-size: 12px; font-weight: 800; color: var(--ink-2); }
-  .trip-route { font-size: 15px; font-weight: 800; margin-top: 3px; letter-spacing: -0.01em; word-break: break-word; }
-  .trip-flight { font-size: 11.5px; color: var(--ink-2); margin-top: 2px; }
-  .trip-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-  .trip-ref { font-size: 11.5px; color: var(--ink-2); margin-top: 7px; word-break: break-all; }
+  .trip-date {
+    font-size: 12.5px; font-weight: 800; color: var(--ink);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .trip-tags2 { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+  .trip-route { font-size: 15px; font-weight: 800; margin-top: 5px; letter-spacing: -0.02em; word-break: break-word; line-height: 1.35; }
+  .trip-flight { font-size: 11.5px; color: var(--ink-2); margin-top: 3px; line-height: 1.5; }
+  .trip-price { font-size: 15px; font-weight: 800; color: var(--ink); margin-top: 6px; letter-spacing: -0.02em; }
+  .trip-price small { font-size: 10.5px; font-weight: 600; color: var(--ink-3); margin-left: 4px; }
+  .trip-memo {
+    font-size: 10.5px; color: var(--ink-2); line-height: 1.5; margin-top: 7px;
+    background: var(--fill); border-radius: 9px; padding: 7px 9px;
+  }
+  .trip-memo .tm { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .trip-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+  .trip-ref { font-size: 11px; color: var(--ink-2); margin-top: 7px; word-break: break-all; }
   .trip-ref b { color: var(--ink); font-family: ui-monospace, Menlo, monospace; letter-spacing: .04em; }
   .trip-actions { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
   .masked { letter-spacing: .12em; }
 
   /* ---------- リクエスト ---------- */
   .req {
-    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 12px 13px; margin-bottom: 10px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 11px 12px; margin-bottom: 9px; box-shadow: var(--shadow);
   }
   .req-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-  .req-title { font-size: 14px; font-weight: 800; line-height: 1.35; }
-  .req-meta { font-size: 11.5px; color: var(--ink-2); margin-top: 4px; line-height: 1.45; }
+  .req-title { font-size: 13.5px; font-weight: 800; line-height: 1.4; }
+  .req-meta { font-size: 10.5px; color: var(--ink-2); margin-top: 4px; line-height: 1.5; }
   .req-actions { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+
+  /* ---------- 設定タイル ---------- */
+  .tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .tile {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 10px 11px; text-align: left; cursor: pointer; box-shadow: var(--shadow);
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .tile .ti { font-size: 15px; line-height: 1.2; }
+  .tile .tl { font-size: 10.5px; color: var(--ink-2); font-weight: 700; }
+  .tile .tv { font-size: 12.5px; font-weight: 800; color: var(--ink); margin-top: 1px; }
+  .tile.warn .tv { color: var(--warn); }
+  .tile.danger .tv { color: var(--danger); }
 
   /* ---------- マイル・カード ---------- */
   .mile {
-    display: flex; align-items: center; gap: 9px; padding: 9px 0; border-top: 1px solid var(--line);
+    display: flex; align-items: center; gap: 8px; padding: 9px 0; border-top: 1px solid var(--line-2); flex-wrap: wrap;
   }
   .mile:first-child { border-top: none; }
-  .mile-main { flex: 1; min-width: 0; }
-  .mile-name { font-size: 12.5px; font-weight: 700; }
+  .mile-main { flex: 1; min-width: 110px; }
+  .mile-name { font-size: 12px; font-weight: 800; }
   .mile-num { font-size: 12.5px; color: var(--ink-2); font-family: ui-monospace, Menlo, monospace; word-break: break-all; }
-  .mile-memo { font-size: 10.5px; color: var(--ink-3); margin-top: 1px; }
+  .mile-memo { font-size: 10px; color: var(--ink-3); margin-top: 1px; }
   .card-line {
-    display: flex; align-items: center; gap: 8px; padding: 9px 0; border-top: 1px solid var(--line); flex-wrap: wrap;
+    display: flex; align-items: center; gap: 7px; padding: 9px 0; border-top: 1px solid var(--line-2); flex-wrap: wrap;
   }
   .card-line:first-child { border-top: none; }
-  .card-line .cl-main { flex: 1; min-width: 120px; }
-  .card-line .cl-name { font-size: 12.5px; font-weight: 700; word-break: break-word; }
-  .card-line .cl-sub { font-size: 10.5px; color: var(--ink-3); margin-top: 1px; }
-  .def-tag { background: var(--ok-soft); color: var(--ok); border-radius: 5px; padding: 1px 5px; font-size: 9.5px; font-weight: 800; margin-left: 5px; }
+  .card-line .cl-main { flex: 1; min-width: 110px; }
+  .card-line .cl-name { font-size: 12px; font-weight: 800; word-break: break-word; }
+  .card-line .cl-sub { font-size: 10px; color: var(--ink-3); margin-top: 1px; }
+  .def-tag { background: var(--ok-soft); color: var(--ok); border-radius: 5px; padding: 1px 5px; font-size: 9px; font-weight: 800; margin-left: 4px; }
 
-  /* ---------- モーダル ---------- */
+  /* ---------- シート（モーダル） ---------- */
   .modal {
     position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end;
     background: rgba(15, 23, 42, .45);
   }
   .sheet {
     width: 100%; max-height: 92vh; background: var(--page);
-    border-radius: 18px 18px 0 0; padding: 8px 14px calc(18px + env(safe-area-inset-bottom, 0px));
+    border-radius: 20px 20px 0 0; padding: 8px 14px calc(18px + env(safe-area-inset-bottom, 0px));
     overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
   .sheet-grip { width: 38px; height: 4px; background: #d1d5db; border-radius: 99px; margin: 4px auto 10px; }
-  .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
-  .sheet-title { font-size: 16px; font-weight: 800; line-height: 1.3; letter-spacing: -0.01em; }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .sheet-title { font-size: 16px; font-weight: 800; line-height: 1.3; letter-spacing: -0.02em; }
   .sheet-body .card:last-child { margin-bottom: 0; }
-  .row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 12.5px; }
+  .row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 7px 0; border-top: 1px solid var(--line-2); font-size: 12px; }
   .row:first-of-type { border-top: none; }
-  .row .k { color: var(--ink-2); flex: none; width: 82px; font-size: 11.5px; font-weight: 600; }
-  .row .v { flex: 1; text-align: right; font-weight: 600; word-break: break-word; }
+  .row .k { color: var(--ink-3); flex: none; width: 76px; font-size: 11px; font-weight: 700; }
+  .row .v { flex: 1; text-align: right; font-weight: 700; word-break: break-word; }
   .code-box {
     display: flex; align-items: center; gap: 8px; background: #0f172a; color: #f8fafc;
-    border-radius: 10px; padding: 10px 12px; margin-top: 6px;
+    border-radius: 11px; padding: 9px 11px; margin-top: 6px;
   }
   .code-box code { flex: 1; font-size: 15px; font-weight: 800; letter-spacing: .08em; font-family: ui-monospace, Menlo, monospace; }
   .code-box .mini-btn { background: #1e293b; border-color: #334155; color: #e2e8f0; }
@@ -340,7 +486,7 @@
   .attach-list { margin-top: 10px; }
   .attach-thumb { display: flex; gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 7px; margin-top: 6px; background: var(--card); }
   .attach-thumb img { width: 54px; height: 54px; object-fit: cover; border-radius: 7px; flex: none; background: #eee; }
-  .attach-thumb .pdf-ic { width: 54px; height: 54px; border-radius: 7px; flex: none; background: #fdecec; color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .attach-thumb .pdf-ic { width: 54px; height: 54px; border-radius: 7px; flex: none; background: var(--danger-soft); color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 22px; }
   .attach-thumb .an { flex: 1; min-width: 0; font-size: 11px; word-break: break-all; }
 
   .print-root { display: none; }
@@ -352,32 +498,44 @@
     .print-root .doc { font-size: 10.5pt; }
   }
 
-  /* ---------- タブバー ---------- */
+  /* ---------- 下タブ ---------- */
   .tabbar {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
     display: grid; grid-template-columns: repeat(4, 1fr);
-    background: rgba(255,255,255,.96); backdrop-filter: saturate(180%) blur(10px);
-    border-top: 1px solid var(--line); padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255,255,255,.97); backdrop-filter: saturate(180%) blur(12px);
+    border-top: 1px solid var(--line); padding: 5px 4px calc(5px + env(safe-area-inset-bottom, 0px));
   }
   .tabbar button {
-    border: none; background: none; padding: 5px 2px; border-radius: 10px;
-    font-size: 10.5px; font-weight: 700; color: var(--ink-3); cursor: pointer;
+    border: none; background: none; padding: 4px 2px; border-radius: 11px;
+    font-size: 10px; font-weight: 800; color: var(--ink-3); cursor: pointer;
     display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 44px;
-    position: relative;
+    position: relative; letter-spacing: .01em;
   }
   .tabbar button .ic { font-size: 18px; line-height: 1.1; }
   .tabbar button.active { color: var(--accent); background: var(--accent-soft); }
   .tabbar .dot {
-    position: absolute; top: 2px; right: 50%; transform: translateX(20px);
+    position: absolute; top: 1px; right: 50%; transform: translateX(20px);
     background: var(--danger); color: #fff; font-size: 9px; font-weight: 800;
     min-width: 15px; height: 15px; line-height: 15px; border-radius: 99px; padding: 0 3px;
   }
 
+  #pane-request { padding-bottom: 74px; }
+
+  /* ---------- 固定CTA（リクエスト） ---------- */
+  .sticky-cta {
+    position: fixed; left: 0; right: 0; z-index: 40;
+    bottom: calc(62px + env(safe-area-inset-bottom, 0px));
+    padding: 10px 14px 8px;
+    background: linear-gradient(to top, var(--page) 62%, rgba(244,245,247,0));
+    pointer-events: none;
+  }
+  .sticky-cta button { pointer-events: auto; box-shadow: 0 6px 18px rgba(15,98,214,.28); }
+
   /* ---------- トースト ---------- */
   #toast {
-    position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px));
-    transform: translate(-50%, 12px); background: rgba(17, 24, 39, .95); color: #fff;
-    padding: 10px 16px; border-radius: 99px; font-size: 12.5px; font-weight: 600;
+    position: fixed; left: 50%; bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+    transform: translate(-50%, 12px); background: rgba(16, 24, 40, .95); color: #fff;
+    padding: 10px 16px; border-radius: 99px; font-size: 12px; font-weight: 700;
     opacity: 0; transition: opacity .18s ease, transform .18s ease; z-index: 90;
     max-width: min(340px, 88vw); text-align: center; pointer-events: none;
   }
@@ -388,6 +546,17 @@
     body { max-width: 460px; margin: 0 auto; }
   }
 </style>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0f62d6">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="フライトウォッチ">
+<meta name="application-name" content="フライトウォッチ">
+<meta name="description" content="航空券・ホテルのセール監視と、見積書・領収書・予約控えを端末内だけで管理する個人用アプリ。">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="icon" href="./icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="./icons/icon-192.png" sizes="192x192">
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#0f6cbd">
 <meta name="mobile-web-app-capable" content="yes">
@@ -402,83 +571,101 @@
 </head>
 <body>
 
-<header class="header">
-  <div class="hdr-main">
-    <h1 class="title">✈️ フライトウォッチ</h1>
-    <div class="subtitle" id="updatedAt">監視データを読み込み中…</div>
+<header class="appbar">
+  <div class="logo" aria-hidden="true">✈️</div>
+  <div class="tt">
+    <h1 class="t1">フライトウォッチ</h1>
+    <div class="t2" id="updatedAt">監視データを読み込み中…</div>
   </div>
-  <div class="hdr-actions">
-    <button class="share-btn" id="btnShare" aria-pressed="false">🔒 共有モード</button>
-    <button class="close-btn" id="btnClose">閉じる</button>
-  </div>
+  <button class="share-pill" id="btnShare" aria-pressed="false"><span class="si">🔒</span><span class="sl">共有モード</span></button>
+  <button class="close-btn" id="btnClose">閉じる</button>
 </header>
 
-<div class="banner danger hidden" id="shareBanner">
-  <span class="ic">🔒</span>
-  <div><b>共有モード（個人情報オフ）中。</b>予約控え・パスポート・会員番号・カード／コンビニ情報・見積書・領収書は画面に出ません。スクショや画面共有はこのまま安全です。</div>
+<div class="share-banner hidden" id="shareBanner">
+  <span class="sb-ic">🔒</span>
+  <div class="sb-tx"><b>共有モード中（個人情報は非表示）</b>
+    <span>予約控え・パスポート・カード・見積書・領収書は画面にも中身にも残しません。このまま画面共有・スクショOK。</span></div>
 </div>
 
-<!-- ========== タブ1：監視中のセール＆おすすめ便 ========== -->
+<!-- ========== タブ1：監視 ========== -->
 <section id="pane-watch" class="pane">
+
+  <div class="hero" id="watchHero">
+    <div class="hero-top">
+      <span class="hero-eyebrow">つぎの予定</span>
+      <span class="hero-chip hidden" id="heroCountdown"></span>
+    </div>
+    <button class="hero-next" id="heroNext">
+      <div class="hn-main">
+        <div class="hn-t" id="heroNextTitle">予定はまだない</div>
+        <div class="hn-s" id="heroNextSub">「＋ 追加」から登録できます</div>
+      </div>
+      <span class="hn-go" aria-hidden="true">›</span>
+    </button>
+    <div class="hero-stats">
+      <button class="hero-stat" data-hero="live"><b id="hsLive">0</b><span>開催中</span></button>
+      <button class="hero-stat" data-hero="new"><b id="hsNew">0</b><span>新着</span></button>
+      <button class="hero-stat" data-hero="star"><b id="hsStar">0</b><span>★ウォッチ</span></button>
+    </div>
+  </div>
+
   <div class="prefs-strip" id="prefsStrip"></div>
-  <div class="filter-label">対象</div>
-  <div class="filter-row tight" id="kindRow"></div>
-  <div class="filter-label">絞り込み</div>
-  <div class="filter-row tight" id="filterRow"></div>
+
+  <div class="fbar">
+    <div class="pill-row" id="kindRow" role="group" aria-label="対象"></div>
+    <div class="pill-row sub" id="filterRow" role="group" aria-label="絞り込み"></div>
+  </div>
+
   <div id="dealList"></div>
-  <div class="card">
-    <div class="card-title"><span>➕ 監視を自分で追加</span>
+
+  <div class="card compact">
+    <div class="card-title"><span>➕ 監視を追加</span>
       <button class="mini-btn accent" id="btnAddDeal">追加する</button>
     </div>
     <p class="sub-label">セールや「このホテル安い」を見つけたら、ここに残せます（端末に保存）。</p>
   </div>
-  <div class="card">
-    <div class="card-title"><span>🔎 比較サイトで最安を見る</span></div>
-    <div class="quick-grid" id="quickLinks"></div>
+
+  <div class="card compact">
+    <div class="card-title"><span>🔎 最安をくらべる</span></div>
+    <div class="quick-grid" id="quickLinks" style="margin-top:10px"></div>
   </div>
 </section>
 
-<!-- ========== タブ2：予約済み＆予定フライト／ホテル ========== -->
+<!-- ========== タブ2：予約 ========== -->
 <section id="pane-trips" class="pane hidden">
-  <div id="tripsLocked" class="hidden">
-    <div class="card">
-      <div class="banner danger" style="margin-bottom:10px">
-        <span class="ic">🔒</span>
-        <div><b>共有モード中のため、予約控えは表示していません。</b>予約番号・ホテル名・領収書・見積書などはすべて非表示です。</div>
-      </div>
-      <button class="btn-ghost" id="btnShareOff2">🔓 共有モードを解除して表示する</button>
-    </div>
-  </div>
+  <div id="tripsLocked" class="hidden"></div>
   <div id="tripsBody">
-    <div class="card-title" style="margin-bottom:10px">
-      <span>🎫 予約済み＆予定</span>
+    <div class="pane-head">
+      <h2>🎫 予約・予定</h2>
       <button class="mini-btn accent" id="btnAddTrip">＋ 追加</button>
     </div>
-    <div class="filter-label">対象</div>
-    <div class="filter-row tight" id="tripKindRow"></div>
-    <div class="kpi-grid" id="tripKpi"></div>
-    <div class="banner info" id="tripExpenseNote">
-      <span class="ic">🧾</span>
-      <div>「経費（確定申告）」にしたものは、旅費交通費として <b>会計（帳簿）</b> に回せる形でまとめてコピーできます。領収書もここからすぐ開けます。</div>
-    </div>
-    <div id="tripList"></div>
+    <div class="pill-row" id="tripKindRow" role="group" aria-label="対象"></div>
+    <div class="kpi-grid" id="tripKpi" style="margin-top:10px"></div>
+    <p class="note" id="tripExpenseNote">「経費（確定申告）」にした予約は、旅費交通費として帳簿に回せる形でまとめてコピーできます。</p>
+    <div id="tripList" style="margin-top:12px"></div>
     <button class="btn-ghost" id="btnCopyExpenses" style="margin-top:2px">🧾 経費分を会計用にコピー</button>
-    <p class="hint">予約・ホテルの控えを手元にまとめておくためのリストです。予約や支払いは各航空会社・ホテル・予約サイトで行ってください。</p>
+    <p class="note">予約や支払いは各航空会社・ホテル・予約サイトで行ってください。ここは控えをまとめる場所です。</p>
     <div class="card" style="margin-top:14px">
       <div class="card-title"><span>📄 発行した見積書</span><span class="count" id="quoteCount">0件</span></div>
-      <div id="quoteList"></div>
+      <div id="quoteList" style="margin-top:8px"></div>
     </div>
   </div>
 </section>
 
-<!-- ========== タブ3：監視リクエスト作成 ========== -->
+<!-- ========== タブ3：リクエスト ========== -->
 <section id="pane-request" class="pane hidden">
-  <div class="card">
-    <div class="card-title"><span>🎯 監視リクエストを作る</span><span class="count" id="reqMode">新規</span></div>
-    <p class="sub-label">条件を入れると、ももかにそのまま送れる依頼文ができます。コピーしてチャットに貼ってね。</p>
+  <div class="pane-head">
+    <h2>🎯 依頼をつくる</h2>
+    <span class="count" id="reqMode" style="font-size:11px;font-weight:700;color:var(--ink-3)">新規</span>
+  </div>
+  <p class="lead">条件を選ぶだけで、ももかに送れる依頼文ができます。コピーしてチャットに貼ってね。</p>
 
-    <div class="field">
-      <span class="flabel">対象</span>
+  <div class="card">
+
+    <div class="step">
+      <div class="step-head"><span class="step-n">1</span>
+        <div><div class="step-t">なにを監視する？</div><div class="step-s">航空券・ホテル・パック</div></div>
+      </div>
       <div class="seg three" id="reqKindSeg">
         <label><input type="radio" name="reqKind" value="flight" checked><span>✈️ 航空券</span></label>
         <label><input type="radio" name="reqKind" value="hotel"><span>🛏 ホテル</span></label>
@@ -486,145 +673,144 @@
       </div>
     </div>
 
-    <div id="reqFlightBlock">
-      <div class="field">
-        <span class="flabel">区間の種類</span>
-        <div class="seg" id="reqTypeSeg">
-          <label><input type="radio" name="reqType" value="round" checked><span>往復</span></label>
-          <label><input type="radio" name="reqType" value="oneway"><span>片道</span></label>
+    <div class="step">
+      <div class="step-head"><span class="step-n">2</span>
+        <div><div class="step-t">いつ・どこへ？</div><div class="step-s">日程と区間（ホテルはエリアと宿泊日）</div></div>
+      </div>
+
+      <div id="reqFlightBlock">
+        <div class="field">
+          <span class="flabel">区間の種類</span>
+          <div class="seg" id="reqTypeSeg">
+            <label><input type="radio" name="reqType" value="round" checked><span>往復</span></label>
+            <label><input type="radio" name="reqType" value="oneway"><span>片道</span></label>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label for="reqDepart">出発日</label>
+            <input type="date" id="reqDepart">
+          </div>
+          <div class="field" id="reqReturnWrap">
+            <label for="reqReturn">帰着日</label>
+            <input type="date" id="reqReturn">
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label for="reqFrom">出発空港</label>
+            <select id="reqFrom">
+              <option value="KIX 関西国際">関西国際（KIX）</option>
+              <option value="ITM 伊丹">大阪伊丹（ITM）</option>
+              <option value="HND 羽田">東京羽田（HND）</option>
+              <option value="NRT 成田">東京成田（NRT）</option>
+              <option value="どこでも">どこでも（安い方）</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="reqTo">到着空港</label>
+            <select id="reqTo">
+              <option value="TPE 台北桃園">台北桃園（TPE）</option>
+              <option value="TSA 台北松山">台北松山（TSA）</option>
+              <option value="ICN 仁川">ソウル仁川（ICN）</option>
+              <option value="HND 羽田">東京羽田（HND）</option>
+              <option value="KIX 関西国際">関西国際（KIX）</option>
+              <option value="どこでも">どこでも（安い方）</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="reqTime">希望時間帯</label>
+          <select id="reqTime">
+            <option value="朝発・夜帰国">朝発・夜帰国（現地を長く）</option>
+            <option value="朝発・夕方帰国">朝発・夕方帰国</option>
+            <option value="昼発・夜帰国">昼発・夜帰国</option>
+            <option value="夜発・夜帰国">夜発・夜帰国（仕事後）</option>
+            <option value="指定なし">指定なし</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="reqAirline">希望航空会社</label>
+          <select id="reqAirline">
+            <option value="指定なし">指定なし（最安優先）</option>
+            <option value="JAL優先">JAL優先</option>
+            <option value="ANA優先">ANA優先</option>
+            <option value="スターフライヤー優先">スターフライヤー優先</option>
+            <option value="Peach優先">Peach優先</option>
+            <option value="ジェットスター優先">ジェットスター優先</option>
+            <option value="LCC以外">LCC以外で</option>
+            <option value="キャセイ優先">キャセイパシフィック優先</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="reqBudget">予算上限（往復・税込・手数料込み）</label>
+          <input type="number" id="reqBudget" inputmode="numeric" min="0" step="500" placeholder="35000">
         </div>
       </div>
 
-      <div class="two-col">
+      <div id="reqHotelBlock" class="hidden">
         <div class="field">
-          <label for="reqDepart">出発日</label>
-          <input type="date" id="reqDepart">
+          <label for="reqCity">エリア・街</label>
+          <input type="text" id="reqCity" placeholder="例：台北駅周辺／大阪・天王寺／ソウル明洞">
         </div>
-        <div class="field" id="reqReturnWrap">
-          <label for="reqReturn">帰着日</label>
-          <input type="date" id="reqReturn">
+        <div class="two-col">
+          <div class="field">
+            <label for="reqCheckIn">チェックイン</label>
+            <input type="date" id="reqCheckIn">
+          </div>
+          <div class="field">
+            <label for="reqCheckOut">チェックアウト</label>
+            <input type="date" id="reqCheckOut">
+          </div>
         </div>
-      </div>
-
-      <div class="two-col">
+        <div class="two-col">
+          <div class="field">
+            <label for="reqHotelBudget">1泊の予算上限（税込）</label>
+            <input type="number" id="reqHotelBudget" inputmode="numeric" min="0" step="500" placeholder="9000">
+          </div>
+          <div class="field">
+            <label for="reqGuests">人数</label>
+            <select id="reqGuests">
+              <option value="1">1名</option>
+              <option value="2">2名</option>
+              <option value="3">3名</option>
+              <option value="4">4名以上</option>
+            </select>
+          </div>
+        </div>
         <div class="field">
-          <label for="reqFrom">出発空港</label>
-          <select id="reqFrom">
-            <option value="KIX 関西国際">関西国際（KIX）</option>
-            <option value="ITM 伊丹">大阪伊丹（ITM）</option>
-            <option value="HND 羽田">東京羽田（HND）</option>
-            <option value="NRT 成田">東京成田（NRT）</option>
-            <option value="どこでも">どこでも（安い方）</option>
+          <label for="reqChain">希望チェーン <span class="opt">（任意）</span></label>
+          <select id="reqChain">
+            <option value="指定なし">指定なし（安いところ）</option>
+            <option value="東横イン">東横イン</option>
+            <option value="ドーミーイン">ドーミーイン</option>
+            <option value="相鉄フレッサイン">相鉄フレッサイン</option>
+            <option value="APA">APAホテル</option>
+            <option value="ルートイン">ルートイン</option>
+            <option value="その他">その他（メモに書く）</option>
           </select>
         </div>
         <div class="field">
-          <label for="reqTo">到着空港</label>
-          <select id="reqTo">
-            <option value="TPE 台北桃園">台北桃園（TPE）</option>
-            <option value="TSA 台北松山">台北松山（TSA）</option>
-            <option value="ICN 仁川">ソウル仁川（ICN）</option>
-            <option value="HND 羽田">東京羽田（HND）</option>
-            <option value="KIX 関西国際">関西国際（KIX）</option>
-            <option value="どこでも">どこでも（安い方）</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="reqTime">希望時間帯</label>
-        <select id="reqTime">
-          <option value="朝発・夜帰国">朝発・夜帰国（現地を長く）</option>
-          <option value="朝発・夕方帰国">朝発・夕方帰国</option>
-          <option value="昼発・夜帰国">昼発・夜帰国</option>
-          <option value="夜発・夜帰国">夜発・夜帰国（仕事後）</option>
-          <option value="指定なし">指定なし</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="reqAirline">希望航空会社</label>
-        <select id="reqAirline">
-          <option value="指定なし">指定なし（最安優先）</option>
-          <option value="JAL優先">JAL優先</option>
-          <option value="ANA優先">ANA優先</option>
-          <option value="スターフライヤー優先">スターフライヤー優先</option>
-          <option value="Peach優先">Peach優先</option>
-          <option value="ジェットスター優先">ジェットスター優先</option>
-          <option value="LCC以外">LCC以外で</option>
-          <option value="キャセイ優先">キャセイパシフィック優先</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="reqBudget">予算上限（往復・税込・手数料込み）</label>
-        <input type="number" id="reqBudget" inputmode="numeric" min="0" step="500" placeholder="35000">
-      </div>
-    </div>
-
-    <div id="reqHotelBlock" class="hidden">
-      <div class="field">
-        <label for="reqCity">エリア・街</label>
-        <input type="text" id="reqCity" placeholder="例：台北駅周辺／大阪・天王寺／ソウル明洞">
-      </div>
-      <div class="two-col">
-        <div class="field">
-          <label for="reqCheckIn">チェックイン</label>
-          <input type="date" id="reqCheckIn">
-        </div>
-        <div class="field">
-          <label for="reqCheckOut">チェックアウト</label>
-          <input type="date" id="reqCheckOut">
-        </div>
-      </div>
-      <div class="two-col">
-        <div class="field">
-          <label for="reqHotelBudget">1泊の予算上限（税込）</label>
-          <input type="number" id="reqHotelBudget" inputmode="numeric" min="0" step="500" placeholder="9000">
-        </div>
-        <div class="field">
-          <label for="reqGuests">人数</label>
-          <select id="reqGuests">
-            <option value="1">1名</option>
-            <option value="2">2名</option>
-            <option value="3">3名</option>
-            <option value="4">4名以上</option>
-          </select>
-        </div>
-      </div>
-      <div class="field">
-        <label for="reqChain">希望チェーン <span class="opt">（任意）</span></label>
-        <select id="reqChain">
-          <option value="指定なし">指定なし（安いところ）</option>
-          <option value="東横イン">東横イン</option>
-          <option value="ドーミーイン">ドーミーイン</option>
-          <option value="相鉄フレッサイン">相鉄フレッサイン</option>
-          <option value="APA">APAホテル</option>
-          <option value="ルートイン">ルートイン</option>
-          <option value="その他">その他（メモに書く）</option>
-        </select>
-      </div>
-      <div class="field">
-        <div class="check-row">
-          <input type="checkbox" id="reqFreeCancel" checked>
-          <div>
-            <div class="ct">キャンセル無料のプランだけにする</div>
-            <div class="cs">前日までの無料キャンセル可・現地決済可を優先（自動予約でも取消しやすく）。</div>
+          <div class="check-row">
+            <input type="checkbox" id="reqFreeCancel" checked>
+            <div>
+              <div class="ct">キャンセル無料のプランだけにする</div>
+              <div class="cs">前日までの無料キャンセル可・現地決済可を優先（自動予約でも取消しやすく）。</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="field" style="margin-top:12px">
-      <span class="flabel">見つけたときの進め方</span>
-      <div class="seg three" id="reqPolicySeg">
-        <label><input type="radio" name="reqPolicy" value="confirm" checked><span>確認カードを出す</span></label>
-        <label><input type="radio" name="reqPolicy" value="quote"><span>見積書を発行して確認後に予約</span></label>
-        <label><input type="radio" name="reqPolicy" value="auto"><span>セール条件内なら自動予約（即確保）</span></label>
+    <div class="step" id="reqSeatField">
+      <div class="step-head"><span class="step-n">3</span>
+        <div><div class="step-t">席と荷物のこだわり</div><div class="step-s">こだわらなければ「指定なし」でOK</div></div>
       </div>
-      <p class="hint" id="policyHint">「確認カードを出す」：候補と金額を見て、決済は自分で判断します。</p>
-    </div>
-
-    <div class="field" id="reqSeatField">
       <div class="two-col">
         <div class="field" style="margin-bottom:0">
           <label for="reqSeat">座席の希望</label>
@@ -647,72 +833,106 @@
       </div>
     </div>
 
-    <div class="field">
-      <span class="flabel">支払い方法</span>
-      <div class="seg" id="reqPaySeg">
-        <label><input type="radio" name="reqPay" value="card" checked><span>💳 登録カード</span></label>
-        <label><input type="radio" name="reqPay" value="conv"><span>🏪 コンビニ払い</span></label>
+    <div class="step">
+      <div class="step-head"><span class="step-n">4</span>
+        <div><div class="step-t">見つけたらどうする？</div><div class="step-s">予約まで進めるか、確認してからか</div></div>
       </div>
-      <div id="reqCardWrap" style="margin-top:9px">
-        <select id="reqCardSel"></select>
+      <div class="opt-list" id="reqPolicySeg">
+        <label class="opt">
+          <input type="radio" name="reqPolicy" value="confirm" checked>
+          <span class="ob"><span class="ot">確認カードを出す</span><span class="os">候補と金額を見て、決済は自分で決める</span></span>
+        </label>
+        <label class="opt">
+          <input type="radio" name="reqPolicy" value="quote">
+          <span class="ob"><span class="ot">見積書を発行して確認後に予約</span><span class="os">内訳つきの見積書を見てから予約・決済</span></span>
+        </label>
+        <label class="opt">
+          <input type="radio" name="reqPolicy" value="auto">
+          <span class="ob"><span class="ot">セール条件内なら自動予約（即確保）</span><span class="os">見積書を記録してから、そのまま確保・決済まで</span></span>
+        </label>
       </div>
-      <div id="reqConvWrap" class="hidden" style="margin-top:9px">
-        <select id="reqConvSel"></select>
+      <p class="hint" id="policyHint">「確認カードを出す」：候補と金額を見て、決済は自分で判断します。</p>
+
+      <div class="banner info" id="autoNote" style="margin:10px 0 0">
+        <span class="ic">🤖</span>
+        <div><b>自動予約の動き：</b>条件に合うセール・運賃（ホテルは空室と料金）を検知したら、ももかがまず<b>見積書（概算）を発行して記録</b>し、そのままブラウザで自動確保します。カード決済なら決済完了の控えを、コンビニ払いなら<b>払込票（バーコード／受付番号）</b>をチャットへ即お届けします。条件を超える場合だけ確認カードを出します。</div>
       </div>
     </div>
 
-    <div class="field">
-      <div class="check-row">
-        <input type="checkbox" id="reqExpense" checked>
-        <div>
-          <div class="ct">確定申告の経費（旅費交通費）に自動反映</div>
-          <div class="cs">経費にすると、予約後に金額と領収書を帳簿用にまとめます。</div>
+    <div class="step">
+      <div class="step-head"><span class="step-n">5</span>
+        <div><div class="step-t">支払いとメモ</div><div class="step-s">決済方法と経費の扱い</div></div>
+      </div>
+
+      <div class="field">
+        <span class="flabel">支払い方法</span>
+        <div class="seg" id="reqPaySeg">
+          <label><input type="radio" name="reqPay" value="card" checked><span>💳 登録カード</span></label>
+          <label><input type="radio" name="reqPay" value="conv"><span>🏪 コンビニ払い</span></label>
+        </div>
+        <div id="reqCardWrap" style="margin-top:9px">
+          <select id="reqCardSel"></select>
+        </div>
+        <div id="reqConvWrap" class="hidden" style="margin-top:9px">
+          <select id="reqConvSel"></select>
         </div>
       </div>
+
+      <div class="field">
+        <div class="check-row">
+          <input type="checkbox" id="reqExpense" checked>
+          <div>
+            <div class="ct">確定申告の経費（旅費交通費）に反映</div>
+            <div class="cs">経費にすると、予約後に金額と領収書を帳簿用にまとめます。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="reqMemo">その他の希望 <span class="opt">（任意）</span></label>
+        <textarea id="reqMemo" placeholder="例：乗継1回までOK／受託手荷物20kg込みで比較／Peachは第2ターミナルなので避けたい"></textarea>
+      </div>
     </div>
 
-    <div class="field">
-      <label for="reqMemo">その他の希望 <span class="opt">（任意）</span></label>
-      <textarea id="reqMemo" placeholder="例：乗継1回までOK／受託手荷物20kg込みで比較／Peachは第2ターミナルなので避けたい"></textarea>
-    </div>
-
-    <div class="banner info" id="autoNote">
-      <span class="ic">🤖</span>
-      <div><b>自動予約の動き：</b>条件に合うセール・運賃（ホテルは空室と料金）を検知したら、ももかがまず<b>見積書（概算）を発行して記録</b>し、そのままブラウザで自動確保します。カード決済なら決済完了の控えを、コンビニ払いなら<b>払込票（バーコード／受付番号）</b>をチャットへ即お届けします。条件を超える場合だけ確認カードを出します。</div>
-    </div>
-
-    <div class="field">
-      <span class="flabel">送る依頼文（プレビュー）</span>
+    <div class="step">
+      <div class="step-head"><span class="step-n">6</span>
+        <div><div class="step-t">依頼文を確認して送る</div><div class="step-s">コピーしてチャットに貼るだけ</div></div>
+      </div>
       <div class="preview" id="reqPreview">—</div>
+      <button class="btn-primary" id="btnReqCopy" style="margin-top:10px">📋 この条件で監視スタート</button>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn-ghost" id="btnReqQuote">📄 見積書を発行</button>
+        <button class="btn-ghost" id="btnReqSave">💾 下書き保存</button>
+      </div>
+      <button class="link-btn hidden" id="btnReqCancel" style="margin-top:8px">編集をやめる</button>
     </div>
-
-    <button class="btn-primary" id="btnReqCopy">📋 この条件で監視スタート（依頼文をコピー）</button>
-    <button class="btn-ghost" id="btnReqQuote" style="margin-top:8px">📄 この条件で見積書を発行</button>
-    <button class="btn-ghost" id="btnReqSave" style="margin-top:8px">💾 下書きとして保存</button>
-    <button class="link-btn hidden" id="btnReqCancel" style="margin-top:6px">編集をやめる</button>
   </div>
 
   <div class="card">
     <div class="card-title"><span>📮 保存したリクエスト</span><span class="count" id="reqCount">0件</span></div>
-    <div id="reqList"></div>
+    <div id="reqList" style="margin-top:8px"></div>
   </div>
 </section>
 
 <!-- ========== タブ4：設定 ========== -->
 <section id="pane-settings" class="pane hidden">
 
-  <div id="settingsLocked" class="hidden">
-    <div class="banner danger">
-      <span class="ic">🔒</span>
-      <div><b>共有モード中のため、個人情報の設定は表示していません。</b>パスポート・カード／コンビニ・会員番号・PINは非表示です。</div>
-    </div>
+  <div class="pane-head"><h2>⚙️ 設定</h2></div>
+
+  <div id="settingsLocked" class="hidden"></div>
+
+  <div class="tile-grid" id="setTiles">
+    <button class="tile" data-goto="passCard"><span class="ti">🛂</span><span class="tl">パスポート</span><b class="tv" id="tilePass">未登録</b></button>
+    <button class="tile" data-goto="payCard"><span class="ti">💳</span><span class="tl">支払い方法</span><b class="tv" id="tilePay">0件</b></button>
+    <button class="tile" data-goto="mileCard"><span class="ti">🪪</span><span class="tl">会員番号</span><b class="tv" id="tileMile">0件</b></button>
+    <button class="tile" data-goto="lockCard"><span class="ti">🔐</span><span class="tl">PINロック</span><b class="tv" id="tileLock">未設定</b></button>
   </div>
 
   <div id="passCard" class="card">
     <div class="card-title"><span>🛂 パスポート</span>
       <button class="mini-btn" id="btnTogglePass">番号を表示</button>
     </div>
-    <div id="passStatus"></div>
+    <div id="passStatus" style="margin-top:10px"></div>
     <div class="field">
       <label for="passName">ローマ字氏名（姓 名の順）</label>
       <input type="text" id="passName" placeholder="例：YAMADA TARO" autocomplete="off" spellcheck="false">
@@ -740,12 +960,12 @@
   </div>
 
   <div id="payCard" class="card">
-    <div class="card-title"><span>💳 支払い方法の登録・管理</span><span class="count" id="payCount">0件</span></div>
-    <p class="sub-label">自動予約・見積書で使う支払い方法を登録します。呼び名と末尾4桁だけを持つ安全設計です。</p>
+    <div class="card-title"><span>💳 支払い方法</span><span class="count" id="payCount">0件</span></div>
+    <p class="sub-label">自動予約・見積書で使う支払い方法。呼び名と末尾4桁だけを持つ安全設計です。</p>
 
-    <div class="filter-label">登録済みカード</div>
+    <div class="filter-label" style="margin-top:12px">登録済みカード</div>
     <div id="cardList"></div>
-    <div style="border-top:1px solid var(--line); margin-top:6px; padding-top:12px">
+    <div style="border-top:1px solid var(--line-2); margin-top:6px; padding-top:12px">
       <div class="two-col">
         <div class="field" style="margin-bottom:8px">
           <label for="newCardName">カードの呼び名</label>
@@ -759,7 +979,7 @@
       <button class="btn-ghost" id="btnAddCard">＋ カードを追加</button>
     </div>
 
-    <div style="border-top:1px solid var(--line); margin-top:14px; padding-top:12px">
+    <div style="border-top:1px solid var(--line-2); margin-top:14px; padding-top:12px">
       <div class="filter-label">コンビニ支払い</div>
       <div class="field">
         <label for="convStore">使うコンビニ</label>
@@ -781,7 +1001,7 @@
 
     <div class="banner warn" style="margin:12px 0 0">
       <span class="ic">🔒</span>
-      <div><b>カード番号（16桁）・有効期限・セキュリティコード（CVC）・ネットバンキングのパスワードは入力も保存もできません。</b>この欄は「どのカードで払うか」の呼び名と末尾4桁だけです。決済はVaultに保存したカードから入力されるので、番号をここに書く必要はありません。</div>
+      <div><b>カード番号（16桁）・有効期限・セキュリティコード（CVC）は入力も保存もできません。</b>この欄は「どのカードで払うか」の呼び名と末尾4桁だけ。決済はVaultに保存したカードから入力されます。</div>
     </div>
   </div>
 
@@ -789,8 +1009,8 @@
     <div class="card-title"><span>🪪 マイレージ・会員番号</span>
       <button class="mini-btn" id="btnToggleMiles">番号を表示</button>
     </div>
-    <div id="mileageList"></div>
-    <div style="border-top:1px solid var(--line); margin-top:4px; padding-top:12px">
+    <div id="mileageList" style="margin-top:8px"></div>
+    <div style="border-top:1px solid var(--line-2); margin-top:4px; padding-top:12px">
       <div class="two-col">
         <div class="field">
           <label for="mileProgram">プログラム</label>
@@ -811,28 +1031,29 @@
       </div>
       <div class="field">
         <label for="mileMemo">メモ <span class="opt">（任意）</span></label>
-        <input type="text" id="mileMemo" placeholder="例：残マイル数や家族会員のメモ" autocomplete="off">
+        <input type="text" id="mileMemo" placeholder="例：残マイル数や家族会員のメモ">
       </div>
       <button class="btn-ghost" id="btnAddMile">＋ 会員番号を追加</button>
     </div>
-    <p class="hint">チェックインや予約の入力欄で、番号の「コピー」を押すとそのまま貼り付けられます。番号は既定で伏せ字です。</p>
+    <p class="hint">チェックインや予約の入力欄で「コピー」を押すとそのまま貼り付けできます。番号は既定で伏せ字です。</p>
   </div>
 
   <div id="lockCard" class="card">
     <div class="card-title"><span>🔐 4桁PINロック</span><span class="count" id="lockState">未設定</span></div>
-    <p class="sub-label">予約・設定タブを開くときに4桁PINを求めます（この端末内にハッシュだけ保存・画面には出ません）。</p>
-    <div id="lockBody"></div>
+    <p class="sub-label">予約・設定タブを開くときに4桁PINを求めます（端末内にハッシュだけ保存）。</p>
+    <div id="lockBody" style="margin-top:10px"></div>
   </div>
 
-  <div class="card">
+  <div class="card" id="prefCard">
     <div class="card-title"><span>🎚️ 監視の希望条件</span></div>
-    <div class="field">
+    <p class="sub-label">ここで決めた条件は、監視リストの上にバッジで出て、リクエスト作成の初期値にも使えます。</p>
+    <div class="field" style="margin-top:12px">
       <span class="flabel">出発空港（複数OK）</span>
-      <div class="filter-row" id="prefAirports" style="margin-bottom:0"></div>
+      <div class="pill-row" id="prefAirports"></div>
     </div>
     <div class="field" style="margin-top:12px">
       <span class="flabel">行きたいエリア（複数OK）</span>
-      <div class="filter-row" id="prefAreas" style="margin-bottom:0"></div>
+      <div class="pill-row" id="prefAreas"></div>
     </div>
     <div class="two-col" style="margin-top:12px">
       <div class="field">
@@ -862,16 +1083,15 @@
       <input type="number" id="prefBudget" inputmode="numeric" min="0" step="1000" placeholder="例：35000">
     </div>
     <button class="btn-primary alt" id="btnSavePrefs">🎚️ 希望条件を保存</button>
-    <p class="hint">ここで決めた条件は、監視リストの上にバッジで出て、リクエスト作成の初期値にも使えます。</p>
   </div>
 
   <div class="card">
     <div class="card-title"><span>📦 データとプライバシー</span></div>
-    <p class="sub-label" style="margin-bottom:12px">
+    <p class="sub-label">
       監視データはももかが更新し、あなたのメモ・パスポート・会員番号・予約・領収書・見積書は<b>この端末内だけ</b>に保存されます。
       サーバーへ送信しません。URLを共有しても、あなたの入力は相手に渡りません。
     </p>
-    <div class="btn-row">
+    <div class="btn-row" style="margin-top:12px">
       <button class="btn-ghost" id="btnBackup">📋 バックアップをコピー</button>
       <button class="btn-ghost" id="btnReset" style="color:var(--danger)">🗑️ 自分の入力を消す</button>
     </div>
@@ -879,10 +1099,14 @@
   </div>
 </section>
 
+<div class="sticky-cta hidden" id="reqSticky">
+  <button class="btn-primary" id="btnReqCopy2">📋 この条件で監視スタート</button>
+</div>
+
 <nav class="tabbar" role="tablist">
   <button data-tab="watch" class="active" role="tab"><span class="ic">✈️</span>監視<span class="dot hidden" id="dotWatch">0</span></button>
   <button data-tab="trips" role="tab"><span class="ic">🎫</span>予約</button>
-  <button data-tab="request" role="tab"><span class="ic">🎯</span>リクエスト</button>
+  <button data-tab="request" role="tab"><span class="ic">🎯</span>依頼</button>
   <button data-tab="settings" role="tab"><span class="ic">⚙️</span>設定</button>
 </nav>
 
