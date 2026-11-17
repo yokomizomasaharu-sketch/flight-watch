@@ -1567,11 +1567,15 @@
     var d = cards.filter(function (c) { return c.id === state.payment.defaultId; })[0];
     return d || cards[0] || null;
   }
-  function cardLabel(c) { return c ? c.name + (c.last4 ? '（末尾' + c.last4 + '）' : '') : ''; }
+  function cardLabel(c) {
+    if (!c) return '';
+    var n = String(c.name || '').replace(/[（(][^）)]*[）)]\s*$/, '').trim() || c.name;
+    return n + (c.last4 ? '（末尾' + c.last4 + '）' : '');
+  }
   function defaultPayText() {
     if (state.shareMode) return '（非表示）';
     var c = defaultCard();
-    if (c) return 'カード（' + cardLabel(c) + '）';
+    if (c) return 'カード ' + cardLabel(c);
     var st = state.payment.conv.store;
     if (st && st !== CONV_STORES[0]) return 'コンビニ（' + st + '）';
     return 'カード決済（未登録）';
