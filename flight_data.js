@@ -19,9 +19,9 @@
    ============================================================ */
 window.FLIGHT_WATCH_DATA = {
   version: '2026-11-18a',
-  updatedAt: '2026-11-17T19:00:00+09:00',
+  updatedAt: '2026-11-18T12:05:00+09:00',
   // 前回更新から新しく検出した deal の id（画面で NEW バッジが付きます）
-  newIds: ['airasia-thailand-2026', 'jal-bf-2026', 'peach-kix-tpe'],
+  newIds: ['expedia-hotels-bf-2026', 'yahoo-travel-bf-2026', 'airasia-thailand-2026', 'jal-bf-2026'],
 
   deals: [
     {
@@ -34,9 +34,9 @@ window.FLIGHT_WATCH_DATA = {
       area: 'other',
       start: '2026-11-17T00:00:00+09:00',
       end: '2026-11-30T23:59:00+09:00',
-      travel: '搭乗 2027-01-04〜2027-02-28（国内線セール運賃）',
-      priceMain: '羽田−伊丹 片道 9,460円〜',
-      priceSub: '国際線は海外DP最大5万円オフクーポン',
+      travel: '搭乗 〜2027-09-30（国際線タイムセール／国内線は1/4〜2/28）',
+      priceMain: '台北往復 56,000円〜 / 沖縄−台北 片道5,250マイル〜',
+      priceSub: '海外DP最大5万円OFF・欧州特典片道16,100マイル〜（11/18〜11/30）',
       code: '',
       conditions: [
         'JMB会員先行：2026-11-17 00:00〜23:59（新規予約は23:29まで）',
@@ -363,6 +363,58 @@ window.FLIGHT_WATCH_DATA = {
       urlLabel: 'エアアジア公式サイト',
       note: '台湾・欧州に続く東南アジア候補として追加。',
       addedAt: '2026-11-17'
+    },
+    {
+      id: 'expedia-hotels-bf-2026',
+      airline: 'Expedia / Hotels.com',
+      color: '#00355f',
+      title: 'ブラックフライデー（対象ホテル最大50%OFF）',
+      kind: 'sale',
+      product: 'hotel',
+      area: 'other',
+      start: '2026-11-17T00:00:00+09:00',
+      end: '2026-12-03T23:59:00+09:00',
+      travel: '宿泊 2026-11-17〜2027-12-30',
+      priceMain: '最大 50% OFF',
+      priceSub: '国内・海外の対象ホテルが割引（会員ログインで適用）',
+      code: '',
+      conditions: [
+        '予約期間：2026-11-17〜2026-12-03 23:59',
+        '対象宿泊：〜2027-12-30（施設により除外日あり）',
+        '台湾・ソウル・欧州・国内いずれのホテルも対象施設あり'
+      ],
+      tags: ['ホテル', '最大50%OFF', '海外・国内'],
+      fitAirports: ['KIX', 'ITM', 'HND', 'NRT'],
+      url: 'https://www.expedia.co.jp/',
+      urlLabel: 'Expedia公式（ブラックフライデー）',
+      note: '航空券をLCCで安く押さえた後のホテル手配に使える。',
+      addedAt: '2026-11-18'
+    },
+    {
+      id: 'yahoo-travel-bf-2026',
+      airline: 'Yahoo!トラベル',
+      color: '#ff0033',
+      title: '超得ブラックフライデー（PayPayポイント15%以上）',
+      kind: 'sale',
+      product: 'hotel',
+      area: 'domestic',
+      start: '2026-11-19T12:00:00+09:00',
+      end: '2026-12-01T11:59:00+09:00',
+      travel: '対象宿泊プラン（オンラインカード決済限定）',
+      priceMain: 'ポイント 15%以上還元',
+      priceSub: '11/19 12:00スタート・即時利用で実質割引可',
+      code: '',
+      conditions: [
+        '開催期間：2026-11-19 12:00〜2026-12-01 11:59',
+        'オンラインカード決済でPayPayポイント15%以上還元（即時利用可）',
+        '国内ホテル・ビジネスホテルの宿泊比較に活用可'
+      ],
+      tags: ['ホテル', '国内', '15%以上還元'],
+      fitAirports: ['HND', 'NRT', 'KIX', 'ITM'],
+      url: 'https://travel.yahoo.co.jp/',
+      urlLabel: 'Yahoo!トラベル公式',
+      note: '明日11/19昼12:00から開始。国内宿泊の比較に有用。',
+      addedAt: '2026-11-18'
     }
   ],
 
