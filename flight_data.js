@@ -18,8 +18,8 @@
      tags[] / url / urlLabel / fitAirports[] / note / addedAt
    ============================================================ */
 window.FLIGHT_WATCH_DATA = {
-  version: '2026-11-18a',
-  updatedAt: '2026-11-18T12:05:00+09:00',
+  version: '2026-11-18b',
+  updatedAt: '2026-11-18T19:00:00+09:00',
   // 前回更新から新しく検出した deal の id（画面で NEW バッジが付きます）
   newIds: ['expedia-hotels-bf-2026', 'yahoo-travel-bf-2026', 'airasia-thailand-2026', 'jal-bf-2026'],
 
@@ -35,8 +35,8 @@ window.FLIGHT_WATCH_DATA = {
       start: '2026-11-17T00:00:00+09:00',
       end: '2026-11-30T23:59:00+09:00',
       travel: '搭乗 〜2027-09-30（国際線タイムセール／国内線は1/4〜2/28）',
-      priceMain: '台北往復 56,000円〜 / 沖縄−台北 片道5,250マイル〜',
-      priceSub: '海外DP最大5万円OFF・欧州特典片道16,100マイル〜（11/18〜11/30）',
+      priceMain: '東京−台北往復 59,000円〜（大阪発+16,000円） / 沖縄−台北 片道5,250マイル〜',
+      priceSub: '欧州往復179,000円〜・海外DP最大5万円OFF・欧州特典片道16,100マイル〜（〜11/30）',
       code: '',
       conditions: [
         'JMB会員先行：2026-11-17 00:00〜23:59（新規予約は23:29まで）',
