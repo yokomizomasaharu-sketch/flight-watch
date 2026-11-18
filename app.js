@@ -60,6 +60,13 @@
   var AI_LABEL = 'watch-route';
   var AP_QUICK_FROM = [['KIX', '関空'], ['ITM', '伊丹'], ['HND', '羽田'], ['NRT', '成田'], ['NGO', '中部'], ['FUK', '福岡'], ['CTS', '新千歳'], ['OKA', '那覇']];
   var AP_QUICK_TO = [['TPE', '台北'], ['ICN', 'ソウル'], ['BKK', 'バンコク'], ['SIN', 'シンガポール'], ['HKG', '香港'], ['CDG', 'パリ'], ['HNL', 'ホノルル'], ['JFK', 'NY']];
+  /* 同じ都市に複数空港があるとき、代表空港を上に出す */
+  var AP_PRIORITY = {
+    KIX: 2, ITM: 1, HND: 1, NRT: 1, NGO: 1, FUK: 1, CTS: 1, OKA: 1, UKB: 1, SDJ: 1,
+    TPE: 2, TSA: 1, KHH: 1, HKG: 1, ICN: 2, GMP: 1, PUS: 1, SIN: 1, BKK: 1, KUL: 1, MNL: 1,
+    DXB: 1, DOH: 1, LAX: 1, JFK: 1, SFO: 1, HNL: 1, GUM: 1, CDG: 1, LHR: 1, FRA: 1,
+    AMS: 1, SYD: 1, MEL: 1, AKL: 1
+  };
   var AREA_BY_CC = {
     TW: 'taiwan', HK: 'taiwan', MO: 'taiwan', JP: 'domestic',
     KR: 'asia', CN: 'asia', TH: 'asia', SG: 'asia', MY: 'asia', ID: 'asia', VN: 'asia', PH: 'asia',
@@ -2191,6 +2198,7 @@
       else if (e.kCity.indexOf(qk) === 0 || e.kName.indexOf(qk) === 0) sc = 72;
       else sc = 50;
       sc += (4 - Math.min(e.rank, 4)) * 3;
+      if (AP_PRIORITY[e.r]) sc += 3 * AP_PRIORITY[e.r];
       out.push({ e: e, sc: sc });
     }
     out.sort(function (a, b) {
