@@ -25,6 +25,7 @@
   ];
   var FILTERS = [
     { k: 'live', l: '開催中' },
+    { k: 'mine', l: '🛰 マイ・ルート' },
     { k: 'kix', l: '関空発' },
     { k: 'hnd', l: '羽田発' },
     { k: 'taiwan', l: '台湾' },
@@ -53,6 +54,23 @@
   var SEAT_OPTS = ['指定なし', '窓側', '通路側'];
   var BAG_OPTS = ['指定なし', 'なし（機内持込のみ）', '20kg', '23kg', '追加料金OK'];
 
+  /* --- 世界の空港データ（airports_data.js）とAI監視連携 --- */
+  var APT = window.FLIGHT_WATCH_AIRPORTS || { airports: [], countries: {} };
+  var AI_REPO = 'yokomizomasaharu-sketch/flight-watch-requests';
+  var AI_LABEL = 'watch-route';
+  var AP_QUICK_FROM = [['KIX', '関空'], ['ITM', '伊丹'], ['HND', '羽田'], ['NRT', '成田'], ['NGO', '中部'], ['FUK', '福岡'], ['CTS', '新千歳'], ['OKA', '那覇']];
+  var AP_QUICK_TO = [['TPE', '台北'], ['ICN', 'ソウル'], ['BKK', 'バンコク'], ['SIN', 'シンガポール'], ['HKG', '香港'], ['CDG', 'パリ'], ['HNL', 'ホノルル'], ['JFK', 'NY']];
+  var AREA_BY_CC = {
+    TW: 'taiwan', HK: 'taiwan', MO: 'taiwan', JP: 'domestic',
+    KR: 'asia', CN: 'asia', TH: 'asia', SG: 'asia', MY: 'asia', ID: 'asia', VN: 'asia', PH: 'asia',
+    MM: 'asia', KH: 'asia', LA: 'asia', BN: 'asia', IN: 'asia', LK: 'asia', NP: 'asia', BD: 'asia',
+    GB: 'europe', FR: 'europe', DE: 'europe', IT: 'europe', ES: 'europe', PT: 'europe', NL: 'europe',
+    BE: 'europe', CH: 'europe', AT: 'europe', IE: 'europe', DK: 'europe', SE: 'europe', NO: 'europe',
+    FI: 'europe', IS: 'europe', PL: 'europe', CZ: 'europe', HU: 'europe', GR: 'europe', TR: 'europe',
+    HR: 'europe', SI: 'europe', RS: 'europe', BG: 'europe', RO: 'europe', SK: 'europe', LU: 'europe',
+    EE: 'europe', LV: 'europe', LT: 'europe', UA: 'europe', RU: 'europe'
+  };
+
   /* ---------------- 状態 ---------------- */
   var state = {
     marks: {},
@@ -64,6 +82,8 @@
     payment: { cards: [], defaultId: '', conv: { store: CONV_STORES[0], memo: '' } },
     mileage: [],
     prefs: { airports: [], areas: [], nights: '', time: '', budget: '' },
+    routes: [],
+    editingRoute: null,
     lock: { salt: '', hash: '' },
     unlocked: false,
     shareMode: false,
@@ -235,6 +255,7 @@
       }
       if (d.lock && typeof d.lock === 'object') state.lock = { salt: d.lock.salt || '', hash: d.lock.hash || '' };
       if (Array.isArray(d.mileage)) state.mileage = d.mileage;
+      if (Array.isArray(d.routes)) state.routes = d.routes;
       if (d.prefs && typeof d.prefs === 'object') state.prefs = Object.assign(state.prefs, d.prefs);
       if (typeof d.filter === 'string') state.filter = d.filter;
       if (typeof d.filterKind === 'string') state.filterKind = d.filterKind;
@@ -259,6 +280,7 @@
       passport: state.passport,
       payment: state.payment,
       mileage: state.mileage,
+      routes: state.routes,
       prefs: state.prefs,
       lock: state.lock,
       filter: state.filter,
@@ -396,6 +418,7 @@
     renderTrips();
     renderSettings();
     renderWatchHero();
+    renderRoutes();
     updatePreview();
     toast(state.shareMode ? '共有モードON：個人情報を隠しました' : '共有モードOFF：通常表示に戻しました');
   }
@@ -463,7 +486,7 @@
   /* ---------------- タブ ---------------- */
   function switchTab(name) {
     state.activeTab = name;
-    ['watch', 'trips', 'request', 'settings'].forEach(function (t) {
+    ['watch', 'route', 'trips', 'request', 'settings'].forEach(function (t) {
       var pane = $('pane-' + t);
       if (pane) pane.classList.toggle('hidden', t !== name);
     });
@@ -473,6 +496,7 @@
     window.scrollTo(0, 0);
     if (name === 'settings') renderSettings();
     if (name === 'trips') renderTrips();
+    if (name === 'route') { renderRoutes(); renderRouteCta(); updateRoutePreview(); }
     if (name === 'request') { renderRequests(); updatePreview(); }
     if (name === 'watch') { renderFilters(); renderDeals(); renderWatchHero(); }
     if ($('reqSticky')) $('reqSticky').classList.toggle('hidden', name !== 'request');
@@ -591,6 +615,7 @@
       if (fk !== 'all' && productOf(d) !== fk) return false;
       var st = dealStatus(d).k;
       if (f === 'star') return !!(state.marks[d.id] && state.marks[d.id].star);
+      if (f === 'mine') return routeMatchesAny(d);
       if (f === 'live') return st === 'live' || st === 'soon';
       if (f === 'kix' || f === 'hnd') return matchesAirport(d, f);
       if (f === 'all') return true;
@@ -636,13 +661,14 @@
 
   function renderFilters() {
     var list = allDeals();
-    var counts = { all: list.length, live: 0, star: 0, kix: 0, hnd: 0 };
+    var counts = { all: list.length, live: 0, star: 0, kix: 0, hnd: 0, mine: 0 };
     list.forEach(function (d) {
       var st = dealStatus(d).k;
       if (st === 'live' || st === 'soon') counts.live++;
       if (state.marks[d.id] && state.marks[d.id].star) counts.star++;
       if (matchesAirport(d, 'kix')) counts.kix++;
       if (matchesAirport(d, 'hnd')) counts.hnd++;
+      if (routeMatchesAny(d)) counts.mine++;
       counts[d.area] = (counts[d.area] || 0) + 1;
     });
     $('filterRow').innerHTML = FILTERS.map(function (f) {
@@ -699,6 +725,7 @@
             (isNew(d) ? '<span class="pill new">NEW</span>' : '') +
             (prod !== 'flight' ? '<span class="pill ' + prod + '">' + (prod === 'hotel' ? '🛏 ホテル' : '🧳 パック') + '</span>' : '') +
             (d.custom ? '<span class="pill ended">手動</span>' : '') +
+            (routeMatchesAny(d) ? '<span class="pill fare">🛰 マイ・ルート</span>' : '') +
             '<button class="star-btn' + (m.star ? ' on' : '') + '" data-star="' + esc(d.id) + '" aria-label="ウォッチ">' + (m.star ? '★' : '☆') + '</button>' +
           '</div>' +
           '<h3 class="deal-title">' + esc(d.title) + '</h3>' +
@@ -2067,6 +2094,637 @@
   }
 
   /* ============================================================
+     タブ：ルート検索＆AI監視セット
+     ============================================================ */
+  var APX = { index: null, byCode: {} };
+  var routePick = { from: '', to: '' };
+
+  function apNorm(s) {
+    if (!s) return '';
+    var t = String(s);
+    try { t = t.normalize('NFKC'); } catch (e) { /* 古い端末はそのまま */ }
+    t = t.toLowerCase();
+    // カタカナ→ひらがな（「パリ」「ぱり」のゆれを吸収）
+    return t.replace(/[\u30a1-\u30f6]/g, function (ch) {
+      return String.fromCharCode(ch.charCodeAt(0) - 0x60);
+    });
+  }
+  function apKey(s) { return apNorm(s).replace(/[\s\-_.,'\u2019()\uff08\uff09\/\u30fb]/g, ''); }
+
+  function apBuild() {
+    if (APX.index) return APX.index;
+    var list = (APT && Array.isArray(APT.airports)) ? APT.airports : [];
+    var cs = (APT && APT.countries) || {};
+    APX.index = list.map(function (a) {
+      var cc = a[3] || '';
+      var cjAll = cs[cc] || '';
+      var cj = cjAll ? cjAll.split('|').join(' ') : '';
+      var e = {
+        r: a[0], name: a[1] || '', city: a[2] || '', cc: cc,
+        ja: a[7] || '', jc: a[8] || '', kana: a[9] || '', kw: a[10] || '',
+        rank: a[6] || 9, code: String(a[0]).toLowerCase(), countryJa: cjAll.split('|')[0] || ''
+      };
+      e.hay = apKey([e.r, e.name, e.city, e.ja, e.jc, e.kana, e.kw, cj].join(' '));
+      e.kJa = apKey(e.ja);
+      e.kJc = apKey(e.jc);
+      e.kCity = apKey(e.city);
+      e.kName = apKey(e.name);
+      APX.byCode[e.r] = e;
+      return e;
+    });
+    return APX.index;
+  }
+  function apRow(code) {
+    var k = String(code || '').toUpperCase();
+    if (!k) return null;
+    if (!APX.index) apBuild();
+    return APX.byCode[k] || null;
+  }
+  function apLabel(e) {
+    if (!e) return '';
+    return e.ja || e.name || e.r;
+  }
+  function apSub(e) {
+    if (!e) return '';
+    var out = [];
+    if (e.jc) out.push(e.jc);
+    else if (e.city) out.push(e.city);
+    if (e.countryJa) out.push(e.countryJa);
+    return out.join('・');
+  }
+  function apPlace(code) {
+    var e = apRow(code);
+    if (!e) return code || '未定';
+    var city = e.jc || e.city;
+    return apLabel(e) + '（' + code + (city ? '・' + city : '') + '）';
+  }
+
+  /* 検索：コード / 英語名 / 都市名 / 日本語名 / よみ / 国名 をまとめて引く */
+  function apSearch(q, limit) {
+    var raw = String(q == null ? '' : q).trim();
+    if (!raw) return [];
+    var idx = apBuild();
+    var tokens = apNorm(raw).split(/\s+/).filter(Boolean).map(apKey).filter(Boolean);
+    if (!tokens.length) return [];
+    var qk = apKey(raw);
+    // 3レターのコードと完全一致する空港があれば、それを最優先で返す
+    if (/^[a-z]{3}$/.test(qk) && APX.byCode[qk.toUpperCase()]) {
+      return [APX.byCode[qk.toUpperCase()]];
+    }
+    var out = [];
+    for (var i = 0; i < idx.length; i++) {
+      var e = idx[i];
+      var ok = true;
+      for (var j = 0; j < tokens.length; j++) {
+        if (e.hay.indexOf(tokens[j]) === -1) { ok = false; break; }
+      }
+      if (!ok) continue;
+      var sc;
+      if (e.code === qk) sc = 100;
+      else if (e.code.indexOf(qk) === 0) sc = 94;
+      else if (e.kJa && e.kJa.replace(/空港/g, '') === qk) sc = 90;
+      else if (e.kJc === qk) sc = 88;
+      else if (e.kCity === qk) sc = 86;
+      else if (e.kName === qk) sc = 84;
+      else if (e.kw && apKey(e.kw).indexOf(qk) === 0) sc = 80;
+      else if (e.kJa.indexOf(qk) === 0 || e.kJc.indexOf(qk) === 0) sc = 76;
+      else if (e.kCity.indexOf(qk) === 0 || e.kName.indexOf(qk) === 0) sc = 72;
+      else sc = 50;
+      sc += (4 - Math.min(e.rank, 4)) * 3;
+      out.push({ e: e, sc: sc });
+    }
+    out.sort(function (a, b) {
+      if (b.sc !== a.sc) return b.sc - a.sc;
+      if (a.e.rank !== b.e.rank) return a.e.rank - b.e.rank;
+      return a.e.r < b.e.r ? -1 : 1;
+    });
+    return out.slice(0, limit || 8).map(function (x) { return x.e; });
+  }
+
+  function renderApSel(which) {
+    var box = $(which === 'from' ? 'routeFromSel' : 'routeToSel');
+    if (!box) return;
+    var code = routePick[which];
+    if (!code) { box.innerHTML = ''; return; }
+    var e = apRow(code);
+    var city = e && (e.jc || e.city);
+    box.innerHTML = '<span class="ap-chip"><span class="cd">' + esc(code) + '</span>' +
+      '<span class="nm">' + esc(apLabel(e) || code) + (city ? '（' + esc(city) + '）' : '') + '</span>' +
+      '<button class="x" data-apclear="' + esc(which) + '" aria-label="選んだ空港を外す">×</button></span>';
+    box.querySelector('[data-apclear]').addEventListener('click', function () {
+      routePick[which] = '';
+      renderApSel(which);
+      updateRoutePreview();
+    });
+  }
+
+  function renderApQuick() {
+    [['from', AP_QUICK_FROM], ['to', AP_QUICK_TO]].forEach(function (pair) {
+      var box = $(pair[0] === 'from' ? 'routeFromQuick' : 'routeToQuick');
+      if (!box) return;
+      box.innerHTML = pair[1].map(function (x) {
+        return '<button class="chip" data-quick="' + esc(x[0]) + '">' + esc(x[1]) + '</button>';
+      }).join('');
+      box.setAttribute('data-qwhich', pair[0]);
+      if (box._bound) return;
+      box._bound = true;
+      box.addEventListener('click', function (ev) {
+        var b = ev.target.closest ? ev.target.closest('[data-quick]') : null;
+        if (!b) return;
+        pickAp(box.getAttribute('data-qwhich'), b.getAttribute('data-quick'));
+      });
+    });
+  }
+
+  function renderApSug(which, q) {
+    var sug = $(which === 'from' ? 'routeFromSug' : 'routeToSug');
+    if (!sug) return;
+    if (!String(q || '').trim()) { sug.innerHTML = ''; sug.classList.add('hidden'); return; }
+    var res = apSearch(q, 8);
+    sug.innerHTML = res.length
+      ? res.map(function (e) {
+        var sub = apSub(e);
+        return '<button data-ap="' + esc(e.r) + '"><div class="s1"><span class="cd">' + esc(e.r) + '</span>' +
+          esc(apLabel(e)) + '</div>' + (sub ? '<div class="s2">' + esc(sub) + '</div>' : '') + '</button>';
+      }).join('')
+      : '<div class="none">「' + esc(q) + '」は見つからないみたい。都市名（台北・Paris）か IATA コード（TPE）で試して。日本語の小さい空港は英語名でもOK。</div>';
+    sug.classList.remove('hidden');
+  }
+
+  function pickAp(which, code) {
+    if (!apRow(code)) return;
+    routePick[which] = String(code).toUpperCase();
+    var input = $(which === 'from' ? 'routeFrom' : 'routeTo');
+    if (input) input.value = '';
+    var sug = $(which === 'from' ? 'routeFromSug' : 'routeToSug');
+    if (sug) { sug.innerHTML = ''; sug.classList.add('hidden'); }
+    renderApSel(which);
+    updateRoutePreview();
+  }
+
+  function bindApPicker(which) {
+    var input = $(which === 'from' ? 'routeFrom' : 'routeTo');
+    if (!input || input._bound) return;
+    input._bound = true;
+    input.addEventListener('input', function () {
+      if (routePick[which]) { routePick[which] = ''; renderApSel(which); }
+      renderApSug(which, input.value);
+      updateRoutePreview();
+    });
+    input.addEventListener('focus', function () {
+      if (input.value.trim()) renderApSug(which, input.value);
+    });
+    var sug = $(which === 'from' ? 'routeFromSug' : 'routeToSug');
+    if (sug) {
+      sug.addEventListener('click', function (ev) {
+        var b = ev.target.closest ? ev.target.closest('[data-ap]') : null;
+        if (!b) return;
+        pickAp(which, b.getAttribute('data-ap'));
+      });
+    }
+    input.addEventListener('blur', function () {
+      setTimeout(function () {
+        if (sug) { sug.innerHTML = ''; sug.classList.add('hidden'); }
+      }, 180);
+    });
+  }
+
+  function setRadio(name, value) {
+    var el = document.querySelector('input[name="' + name + '"][value="' + value + '"]');
+    if (el) el.checked = true;
+  }
+  function radioVal(name, fallback) {
+    var el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : fallback;
+  }
+
+  function routePeriodText(r) {
+    if (r.when === 'dates') {
+      if (!r.depart) return '日程未定';
+      if (r.leg === 'oneway') return fmtDate(r.depart, true) + ' 出発（片道）';
+      if (!r.ret) return fmtDate(r.depart, true) + ' 出発（帰着未定）';
+      var n = dayDiff(r.depart, r.ret);
+      return fmtDate(r.depart, true) + ' 〜 ' + fmtDate(r.ret, true) +
+        (n != null && n >= 0 ? '（' + (n === 0 ? '日帰り' : n + '泊' + (n + 1) + '日') + '）' : '');
+    }
+    if (r.when === 'weekend') {
+      var m = { next: '来月', '2': '2ヶ月後', '3': '3ヶ月後', any: 'どの週末でも' }[r.weekendMonth] || '来月';
+      return m + 'の週末（金〜日・2泊3日でいちばん安い組み合わせ）';
+    }
+    if (r.when === 'range') {
+      if (!r.rangeFrom && !r.rangeTo) return '期間未定（3ヶ月先までの最安）';
+      return (r.rangeFrom ? fmtDate(r.rangeFrom, true) : '指定なし') + ' 〜 ' +
+        (r.rangeTo ? fmtDate(r.rangeTo, true) : '指定なし') + ' の間で最安';
+    }
+    return 'いつでも（' + (r.months || '3') + 'ヶ月先までの最安）';
+  }
+  function routePeriodShort(r) {
+    if (r.when === 'dates' && r.depart) {
+      return r.depart + (r.leg === 'oneway' ? ' 片道' : (r.ret ? '〜' + r.ret : ''));
+    }
+    if (r.when === 'weekend') return '週末2泊3日(' + (r.weekendMonth || 'next') + ')';
+    if (r.when === 'range') return (r.rangeFrom || '?') + '〜' + (r.rangeTo || '?') + ' 最安';
+    return r.months + 'ヶ月先まで最安';
+  }
+
+  function readRouteForm() {
+    var old = state.editingRoute ? state.routes.filter(function (x) { return x.id === state.editingRoute; })[0] : null;
+    return {
+      id: state.editingRoute || uid('rt'),
+      from: routePick.from || '',
+      to: routePick.to || '',
+      leg: radioVal('routeLeg', 'round'),
+      when: radioVal('routeWhen', 'dates'),
+      depart: $('routeDepart').value,
+      ret: $('routeReturn').value,
+      weekendMonth: $('routeWeekendMonth').value,
+      rangeFrom: $('routeRangeFrom').value,
+      rangeTo: $('routeRangeTo').value,
+      months: $('routeMonths').value,
+      pax: $('routePax').value,
+      budget: Number($('routeBudget').value) || 0,
+      time: $('routeTime').value,
+      stops: radioVal('routeStop', 'direct'),
+      lcc: radioVal('routeLcc', 'ok'),
+      seat: $('routeSeat').value,
+      bag: $('routeBag').value,
+      note: $('routeNote').value.trim(),
+      status: old ? (old.status || 'draft') : 'draft',
+      sentAt: old ? (old.sentAt || '') : ''
+    };
+  }
+
+  function buildRouteText(r) {
+    var L = [];
+    var legTxt = r.leg === 'oneway' ? '片道' : '往復';
+    L.push('【AIフライト監視セット】' + (r.from || '未定') + '→' + (r.to || '未定') + ' ' + legTxt);
+    L.push('・区間：' + apPlace(r.from) + ' → ' + apPlace(r.to) + '／' + legTxt);
+    L.push('・日程：' + routePeriodText(r));
+    L.push('・人数：' + (r.pax || '1') + '名');
+    L.push('・希望時間帯：' + (r.time || '指定なし'));
+    L.push('・乗継：' + ({ direct: '直行便のみ', once: '乗継1回まで', any: '乗継回数は問わない' }[r.stops] || '直行便のみ'));
+    L.push('・LCC：' + (r.lcc === 'no' ? 'LCCは避ける' : 'LCCもOK'));
+    L.push('・予算上限：' + (r.budget ? yen(r.budget) + '（税・手数料込み／' + (r.pax || '1') + '名分）' : '未設定（相場より安い目玉なら教えて）'));
+    L.push('・座席：' + (r.seat || '指定なし'));
+    L.push('・受託手荷物：' + (r.bag || '指定なし'));
+    if (r.note) L.push('・メモ：' + r.note);
+    L.push('');
+    L.push('このルートを常時監視して、条件に合う便が出たら金額・便名・時刻・予約URLを教えてください。' + (r.budget ? '予算を超える場合だけ相談してください。' : ''));
+    L.push('（フライトウォッチ「ルート検索＆AI監視セット」より' + (r.id ? ' / 監視ID: ' + r.id : '') + '）');
+    return L.join('\n');
+  }
+
+  function routeIssueUrl(r) {
+    var title = '[flight-watch] ' + (r.from || '?') + '→' + (r.to || '?') + ' ' +
+      (r.leg === 'oneway' ? '片道' : '往復') + ' / ' + routePeriodShort(r);
+    var body = buildRouteText(r) + '\n\n---\nAIへの指示: 上の区間・日程・条件で最安の航空券を探してください。条件内の便が出たら、金額・便名・時刻・予約URLをチャットで報告し、予約と決済は事前確認を取ってから進めてください。';
+    return 'https://github.com/' + AI_REPO + '/issues/new?labels=' + encodeURIComponent(AI_LABEL) +
+      '&title=' + encodeURIComponent(title) + '&body=' + encodeURIComponent(body);
+  }
+
+  function openExternal(url) {
+    try {
+      var a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, 800);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function updateRoutePreview() {
+    if (!$('routePreview')) return;
+    var w = radioVal('routeWhen', 'dates');
+    var leg = radioVal('routeLeg', 'round');
+    $('routeDatesWrap').classList.toggle('hidden', w !== 'dates');
+    $('routeReturnWrap').classList.toggle('hidden', w !== 'dates' || leg === 'oneway');
+    $('routeWeekendWrap').classList.toggle('hidden', w !== 'weekend');
+    $('routeRangeWrap').classList.toggle('hidden', w !== 'range');
+    $('routeAnytimeWrap').classList.toggle('hidden', w !== 'anytime');
+    $('routePreview').textContent = buildRouteText(readRouteForm());
+  }
+
+  function saveRouteFromForm(silent) {
+    var r = readRouteForm();
+    if (!r.from || !r.to) { toast('出発と到着の空港を選んでね', true); return null; }
+    if (r.from === r.to) { toast('出発と到着が同じ空港だよ', true); return null; }
+    if (r.when === 'dates' && !r.depart) { toast('日付を入れるか「週末」「いつでも」を選んでね', true); return null; }
+    var now = new Date().toISOString();
+    var idx = -1;
+    state.routes.forEach(function (x, i) { if (x.id === r.id) idx = i; });
+    var rec;
+    if (idx >= 0) {
+      rec = Object.assign({}, state.routes[idx], r, { updatedAt: now });
+      // 条件を変えたら、送信済みの印は「未送信」に戻す（前の条件で監視され続けるのを防ぐ）
+      if (state.routes[idx].text !== buildRouteText(rec)) { rec.status = 'draft'; rec.sentAt = ''; }
+      rec.text = buildRouteText(rec);
+      state.routes[idx] = rec;
+    } else {
+      rec = Object.assign({}, r, { createdAt: now, updatedAt: now, status: 'draft', sentAt: '', openedAt: '' });
+      rec.text = buildRouteText(rec);
+      state.routes.unshift(rec);
+    }
+    state.editingRoute = rec.id;
+    if ($('routeMode')) $('routeMode').textContent = '編集中';
+    if ($('btnRouteCancel')) $('btnRouteCancel').classList.remove('hidden');
+    persist();
+    renderRoutes(); renderRouteCta(); renderDeals(); renderFilters();
+    if (!silent) toast('監視リストに保存しました 🛰');
+    return rec;
+  }
+
+  function sendRoute(rec) {
+    if (!rec) return;
+    var r = rec;
+    if (!r.text) r.text = buildRouteText(r);
+    var url = routeIssueUrl(r);
+    var opened = openExternal(url);
+    var cur = state.routes.filter(function (x) { return x.id === r.id; })[0];
+    if (cur && !cur.sentAt) { cur.status = 'opened'; cur.openedAt = new Date().toISOString(); persist(); renderRoutes(); }
+    if (opened) {
+      toast('GitHubの画面が開いたよ。「Create」で確定すると次の監視から反映されます');
+      signal('フライトウォッチで監視ルートをセットしました：' + r.from + '→' + r.to + ' ' + routePeriodShort(r) +
+        '／' + (r.budget ? '予算' + yen(r.budget) : '予算未設定') + '／' + r.time + '／人数' + r.pax + '。' +
+        'GitHub（' + AI_REPO + '）のIssueに条件を送っています。次回の定期監視からこのルートを確認してください。');
+    } else {
+      copyText(buildRouteText(r)).then(function () { toast('この画面ではGitHubを開けないので、条件をコピーしました'); },
+        function () { toast('GitHubを開けませんでした', true); });
+    }
+  }
+
+  function copyRoute(id) {
+    var r = state.routes.filter(function (x) { return x.id === id; })[0];
+    if (!r) return;
+    var txt = r.text || buildRouteText(r);
+    copyText(txt).then(function () {
+      toast('監視条件をコピーしました 📋 チャットに貼ってね');
+      signal('フライトウォッチの監視ルート（コピー）：' + r.from + '→' + r.to + ' ' + routePeriodShort(r) +
+        '。チャットに貼られてきたら、この区間・日程・条件で最安を監視してください。');
+    }, function () { toast('コピーできませんでした', true); });
+  }
+
+  function shareRoute(id) {
+    var r = state.routes.filter(function (x) { return x.id === id; })[0];
+    if (!r) return;
+    var txt = r.text || buildRouteText(r);
+    if (navigator.share) {
+      navigator.share({ title: 'AIフライト監視セット ' + r.from + '→' + r.to, text: txt }).catch(function () { /* キャンセル */ });
+      return;
+    }
+    copyRoute(id);
+  }
+
+  function editRoute(id) {
+    var r = state.routes.filter(function (x) { return x.id === id; })[0];
+    if (!r) return;
+    state.editingRoute = id;
+    $('routeMode').textContent = '編集中';
+    $('btnRouteCancel').classList.remove('hidden');
+    routePick.from = r.from || '';
+    routePick.to = r.to || '';
+    renderApSel('from'); renderApSel('to');
+    setRadio('routeLeg', r.leg || 'round');
+    setRadio('routeWhen', r.when || 'dates');
+    $('routeDepart').value = r.depart || '';
+    $('routeReturn').value = r.ret || '';
+    $('routeWeekendMonth').value = r.weekendMonth || 'next';
+    $('routeRangeFrom').value = r.rangeFrom || '';
+    $('routeRangeTo').value = r.rangeTo || '';
+    $('routeMonths').value = r.months || '3';
+    $('routePax').value = r.pax || '1';
+    $('routeBudget').value = r.budget || '';
+    $('routeTime').value = r.time || '指定なし';
+    setRadio('routeStop', r.stops || 'direct');
+    setRadio('routeLcc', r.lcc || 'ok');
+    $('routeSeat').value = r.seat || '指定なし';
+    $('routeBag').value = r.bag || '指定なし';
+    $('routeNote').value = r.note || '';
+    switchTab('route');
+    updateRoutePreview();
+    window.scrollTo(0, 0);
+    toast('読み込んだよ。直して保存してね');
+  }
+
+  function clearRouteForm() {
+    state.editingRoute = null;
+    if ($('routeMode')) $('routeMode').textContent = '新規';
+    if ($('btnRouteCancel')) $('btnRouteCancel').classList.add('hidden');
+    routePick.from = 'KIX';
+    routePick.to = '';
+    renderApSel('from'); renderApSel('to');
+    ['routeDepart', 'routeReturn', 'routeRangeFrom', 'routeRangeTo', 'routeBudget', 'routeNote'].forEach(function (id) {
+      if ($(id)) $(id).value = '';
+    });
+    ['routeFrom', 'routeTo'].forEach(function (id) { if ($(id)) $(id).value = ''; });
+    $('routeWeekendMonth').value = 'next';
+    $('routeMonths').value = '3';
+    $('routePax').value = '1';
+    $('routeTime').value = '指定なし';
+    $('routeSeat').value = '指定なし';
+    $('routeBag').value = '指定なし';
+    setRadio('routeLeg', 'round');
+    setRadio('routeWhen', 'dates');
+    setRadio('routeStop', 'direct');
+    setRadio('routeLcc', 'ok');
+    updateRoutePreview();
+  }
+
+  /* ---- 保存したルートと監視データの照合 ---- */
+  function destKeys(code) {
+    var e = apRow(code);
+    var out = [];
+    if (!e) return code ? [apKey(code)] : [];
+    [code, e.ja, e.jc, e.city, e.kw].forEach(function (v) {
+      var k = apKey(v);
+      if (k && k.length >= 2 && out.indexOf(k) === -1) out.push(k);
+    });
+    return out;
+  }
+  function dealMatchesRoute(d, r) {
+    if (!r || !r.to) return false;
+    var fits = (d.fitAirports || []).map(function (c) { return String(c).toUpperCase(); });
+    if (fits.indexOf(String(r.to).toUpperCase()) !== -1) return true;
+    var txt = apKey([d.title, d.priceMain, d.priceSub, d.travel, (d.tags || []).join(' '), fits.join(' ')].join(' '));
+    var keys = destKeys(r.to);
+    for (var i = 0; i < keys.length; i++) {
+      if (txt.indexOf(keys[i]) !== -1) {
+        // 発地が決まっているセールなら、自分の出発地も選べるものだけ拾う
+        if (fits.length && fits.indexOf(String(r.from).toUpperCase()) === -1) return false;
+        return true;
+      }
+    }
+    var e = apRow(r.to);
+    if (e && d.area && AREA_BY_CC[e.cc] && AREA_BY_CC[e.cc] === d.area) {
+      if (fits.length && fits.indexOf(String(r.from).toUpperCase()) === -1) return false;
+      return true;
+    }
+    return false;
+  }
+  function routeMatchesAny(d) {
+    return (state.routes || []).some(function (r) { return dealMatchesRoute(d, r); });
+  }
+  function routeHits(r, limit) {
+    return allDeals().filter(function (d) { return dealMatchesRoute(d, r); }).slice(0, limit || 3);
+  }
+
+  function renderRouteCta() {
+    if (!$('routeCtaSub')) return;
+    var n = (state.routes || []).length;
+    $('routeCtaSub').textContent = n
+      ? '監視中 ' + n + 'ルート。ももかが 12:05 / 19:00 に最安を探しています。'
+      : '世界5,338空港から検索。ルートを決めたら、ももかが 12:05 / 19:00 に最安を探します。';
+  }
+
+  function renderRoutes() {
+    var list = state.routes || [];
+    if ($('routeCount')) $('routeCount').textContent = list.length + '件';
+    if (!$('routeList')) return;
+    if (state.shareMode) {
+      $('routeList').innerHTML = '<div class="empty"><span class="big">🔒</span>共有モード中は監視ルートを表示しません。</div>';
+      return;
+    }
+    if (!list.length) {
+      $('routeList').innerHTML = '<div class="empty"><span class="big">🧭</span>まだルートがないよ。<br>上の検索で行き先を選んで保存してみて。</div>';
+      return;
+    }
+    $('routeList').innerHTML = list.map(function (r) {
+      var pill = r.sentAt ? '<span class="pill live">AI監視中</span>'
+        : (r.status === 'opened' ? '<span class="pill soon">送信画面を開いた</span>' : '<span class="pill ended">未送信</span>');
+      var meta = [routePeriodText(r), r.time || '指定なし'];
+      if (r.budget) meta.push('予算 ' + yen(r.budget));
+      meta.push((r.pax || '1') + '名');
+      if (r.stops === 'direct') meta.push('直行');
+      else if (r.stops === 'once') meta.push('乗継1回まで');
+      if (r.lcc === 'no') meta.push('LCC避ける');
+      var hits = routeHits(r, 3);
+      var hitHtml = '';
+      if (hits.length) {
+        hitHtml = '<div class="route-hit"><div class="rh-t">🛰 このルートに合いそうな候補 ' + hits.length + '件</div>' +
+          hits.map(function (d) {
+            var price = d.priceMain ? String(d.priceMain).split('/')[0].trim() : '';
+            return '<button data-routehit="' + esc(d.id) + '">' + esc(d.airline || '') + '｜' + esc(d.title || '') +
+              (price ? '｜' + esc(price) : '') + '</button>';
+          }).join('') + '</div>';
+      }
+      return '<div class="route' + (r.sentAt ? ' watched' : '') + '" data-route="' + esc(r.id) + '">' +
+        '<div class="route-top"><div class="route-od">' + esc(r.from) + '<span class="ar">→</span>' + esc(r.to) +
+        ' <span style="font-size:11px;font-weight:700;color:var(--ink-3)">' + (r.leg === 'oneway' ? '片道' : '往復') + '</span></div>' +
+        pill + '</div>' +
+        '<div class="route-names">' + esc(apPlace(r.from)) + ' → ' + esc(apPlace(r.to)) + '</div>' +
+        '<div class="route-meta">' + esc(meta.join(' ・ ')) + (r.note ? '<br>メモ：' + esc(r.note) : '') + '</div>' +
+        hitHtml +
+        '<div class="route-actions">' +
+          '<button class="mini-btn accent" data-routesend="' + esc(r.id) + '">🤖 AI監視に' + (r.sentAt || r.status === 'opened' ? '再送信' : '送信') + '</button>' +
+          (r.sentAt ? '' : '<button class="mini-btn" data-routemark="' + esc(r.id) + '">✓ 送信した</button>') +
+          '<button class="mini-btn" data-routecopy="' + esc(r.id) + '">📋 コピー</button>' +
+          '<button class="mini-btn" data-routeshare="' + esc(r.id) + '">📤 共有</button>' +
+          '<button class="mini-btn" data-routeedit="' + esc(r.id) + '">✏️ 編集</button>' +
+          '<button class="mini-btn danger" data-routedel="' + esc(r.id) + '">🗑 削除</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    var box = $('routeList');
+    Array.prototype.forEach.call(box.querySelectorAll('[data-routesend]'), function (b) {
+      b.addEventListener('click', function () {
+        var r = state.routes.filter(function (x) { return x.id === b.getAttribute('data-routesend'); })[0];
+        sendRoute(r);
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-routemark]'), function (b) {
+      b.addEventListener('click', function () {
+        var r = state.routes.filter(function (x) { return x.id === b.getAttribute('data-routemark'); })[0];
+        if (!r) return;
+        r.sentAt = new Date().toISOString();
+        r.status = 'sent';
+        persist(); renderRoutes();
+        toast('AI監視中にしました 🛰');
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-routecopy]'), function (b) {
+      b.addEventListener('click', function () { copyRoute(b.getAttribute('data-routecopy')); });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-routeshare]'), function (b) {
+      b.addEventListener('click', function () { shareRoute(b.getAttribute('data-routeshare')); });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-routeedit]'), function (b) {
+      b.addEventListener('click', function () { editRoute(b.getAttribute('data-routeedit')); });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-routedel]'), function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-routedel');
+        if (!window.confirm('この監視ルートを消しますか？（アプリの一覧からのみ消えます）')) return;
+        state.routes = state.routes.filter(function (x) { return x.id !== id; });
+        if (state.editingRoute === id) clearRouteForm();
+        persist(); renderRoutes(); renderRouteCta(); renderDeals(); renderFilters();
+        toast('監視ルートを消しました');
+      });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-routehit]'), function (b) {
+      b.addEventListener('click', function () { openDeal(b.getAttribute('data-routehit')); });
+    });
+  }
+
+  function initRouteForm() {
+    renderApQuick();
+    if (!routePick.from) routePick.from = 'KIX';
+    renderApSel('from');
+    renderApSel('to');
+    var t = new Date();
+    t.setDate(t.getDate() + 14);
+    var m = ('0' + (t.getMonth() + 1)).slice(-2);
+    var d = ('0' + t.getDate()).slice(-2);
+    var dep = t.getFullYear() + '-' + m + '-' + d;
+    var t2 = new Date(t.getTime() + 2 * 86400000);
+    var ret = t2.getFullYear() + '-' + ('0' + (t2.getMonth() + 1)).slice(-2) + '-' + ('0' + t2.getDate()).slice(-2);
+    if ($('routeDepart') && !$('routeDepart').value) $('routeDepart').value = dep;
+    if ($('routeReturn') && !$('routeReturn').value) $('routeReturn').value = ret;
+    updateRoutePreview();
+  }
+
+  function bindRoute() {
+    bindApPicker('from');
+    bindApPicker('to');
+    var swap = $('btnRouteSwap');
+    if (swap) swap.addEventListener('click', function () {
+      var a = routePick.from, b = routePick.to;
+      routePick.from = b; routePick.to = a;
+      renderApSel('from'); renderApSel('to');
+      updateRoutePreview();
+      toast('出発と到着を入れ替えました');
+    });
+    ['routeDepart', 'routeReturn', 'routeWeekendMonth', 'routeRangeFrom', 'routeRangeTo', 'routeMonths',
+      'routePax', 'routeBudget', 'routeTime', 'routeSeat', 'routeBag', 'routeNote'].forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', updateRoutePreview);
+      el.addEventListener('change', updateRoutePreview);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="routeWhen"], input[name="routeLeg"], input[name="routeStop"], input[name="routeLcc"]'), function (el) {
+      el.addEventListener('change', updateRoutePreview);
+    });
+    if ($('btnRouteSave')) $('btnRouteSave').addEventListener('click', function () { saveRouteFromForm(false); });
+    if ($('btnRouteCopy')) $('btnRouteCopy').addEventListener('click', function () {
+      var r = readRouteForm();
+      if (!r.from || !r.to) { toast('出発と到着の空港を選んでね', true); return; }
+      copyText(buildRouteText(r)).then(function () { toast('条件をコピーしました 📋 チャットに貼ってね'); },
+        function () { toast('コピーできませんでした', true); });
+    });
+    if ($('btnRouteSend')) $('btnRouteSend').addEventListener('click', function () {
+      var rec = saveRouteFromForm(true);
+      if (rec) sendRoute(rec);
+    });
+    if ($('btnRouteCancel')) $('btnRouteCancel').addEventListener('click', function () {
+      clearRouteForm();
+      toast('編集をやめました');
+    });
+    if ($('btnGoRoute')) $('btnGoRoute').addEventListener('click', function () { switchTab('route'); });
+  }
+
+  /* ============================================================
      タブ4：設定
      ============================================================ */
   function passportReport() {
@@ -2419,6 +3077,7 @@
     $('btnAddTrip').addEventListener('click', function () { openTripForm(null); });
     $('btnCopyExpenses').addEventListener('click', copyExpenses);
     bindHero();
+    bindRoute();
     Array.prototype.forEach.call(document.querySelectorAll('#setTiles [data-goto]'), function (b) {
       b.addEventListener('click', function () { scrollToCard(b.getAttribute('data-goto')); });
     });
@@ -2542,7 +3201,7 @@
     $('btnBackup').addEventListener('click', function () {
       var data = {
         marks: state.marks, userDeals: state.userDeals, trips: state.trips, requests: state.requests, quotes: state.quotes,
-        passport: state.passport, payment: state.payment, mileage: state.mileage, prefs: state.prefs
+        passport: state.passport, payment: state.payment, mileage: state.mileage, prefs: state.prefs, routes: state.routes
       };
       copyText(JSON.stringify(data, null, 1)).then(function () { toast('バックアップをコピーしました（大事に保管してね）'); },
         function () { toast('コピーできませんでした', true); });
@@ -2552,12 +3211,14 @@
       state.marks = {}; state.userDeals = []; state.requests = []; state.passport = {};
       state.payment = { cards: [], defaultId: '', conv: { store: CONV_STORES[0], memo: '' } };
       state.mileage = []; state.quotes = [];
+      state.routes = []; state.editingRoute = null;
       state.prefs = { airports: [], areas: [], nights: '', time: '', budget: '' };
       state.lock = { salt: '', hash: '' }; state.unlocked = true; state.revealed = {};
       state.trips = feedTrips.map(function (t) { return Object.assign({}, t); });
       try { localStorage.removeItem(STORE_KEY); } catch (e) { /* noop */ }
       persist();
       renderDeals(); renderFilters(); renderTrips(); renderSettings(); renderRequests();
+      if ($('routeList')) { clearRouteForm(); renderRoutes(); renderRouteCta(); }
       toast('自分の入力を消しました');
     });
   }
@@ -2578,6 +3239,9 @@
     renderTrips();
     clearReqForm();
     renderRequests();
+    renderRoutes();
+    renderRouteCta();
+    initRouteForm();
     updateNewDot();
     var upd = FEED.updatedAt ? parseISO(FEED.updatedAt) : null;
     $('updatedAt').textContent = upd
