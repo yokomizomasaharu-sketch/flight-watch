@@ -18,10 +18,10 @@
      tags[] / url / urlLabel / fitAirports[] / note / addedAt
    ============================================================ */
 window.FLIGHT_WATCH_DATA = {
-  version: '2026-11-19a',
-  updatedAt: '2026-11-19T12:05:00+09:00',
+  version: '2026-11-19b',
+  updatedAt: '2026-11-19T19:00:00+09:00',
   // 前回更新から新しく検出した deal の id（画面で NEW バッジが付きます）
-  newIds: ['expedia-hotels-bf-2026', 'yahoo-travel-bf-2026', 'airasia-thailand-2026', 'jal-bf-2026'],
+  newIds: ['tigerair-couple-day-2026', 'peach-summer-2027-intl', 'expedia-hotels-bf-2026', 'yahoo-travel-bf-2026'],
 
   deals: [
     {
@@ -413,8 +413,60 @@ window.FLIGHT_WATCH_DATA = {
       fitAirports: ['HND', 'NRT', 'KIX', 'ITM'],
       url: 'https://travel.yahoo.co.jp/',
       urlLabel: 'Yahoo!トラベル公式',
-      note: '明日11/19昼12:00から開始。国内宿泊の比較に有用。',
+      note: '11/19昼12:00から開始。国内宿泊の比較に有用。',
       addedAt: '2026-11-18'
+    },
+    {
+      id: 'tigerair-couple-day-2026',
+      airline: 'タイガーエア台湾',
+      color: '#ff9900',
+      title: 'いい夫婦の日セール（高雄・台南 特別運賃）',
+      kind: 'sale',
+      product: 'flight',
+      area: 'taiwan',
+      start: '2026-11-20T10:00:00+09:00',
+      end: '2026-11-23T23:59:00+09:00',
+      travel: '搭乗 2026-11-20〜2027-10-30',
+      priceMain: '大阪⇔高雄 片道 9,500円〜',
+      priceSub: '沖縄・石垣⇔高雄/台南 5,300円〜・成田⇔高雄 10,100円〜',
+      code: '',
+      conditions: [
+        '販売期間：2026-11-20 10:00〜11-23 23:59',
+        '対象搭乗：2026-11-20〜2027-10-30（2027年夏ダイヤまで広く対象）',
+        '燃油サーチャージなし（諸税・手数料・受託手荷物は別途）'
+      ],
+      tags: ['台湾', '高雄', 'LCC', '関空発あり'],
+      fitAirports: ['KIX', 'NRT', 'OKA'],
+      url: 'https://www.tigerairtw.com/ja-JP/index',
+      urlLabel: 'タイガーエア台湾公式',
+      note: '明日11/20 10:00開始。関空⇔高雄が片道9,500円〜で来年10月末まで対象。',
+      addedAt: '2026-11-19'
+    },
+    {
+      id: 'peach-summer-2027-intl',
+      airline: 'Peach',
+      color: '#d90075',
+      title: '2027年夏ダイヤ 国際線9路線 販売開始',
+      kind: 'fare',
+      product: 'flight',
+      area: 'asia',
+      start: '2026-11-19T16:00:00+09:00',
+      end: '2027-10-30T23:59:00+09:00',
+      travel: '2027年夏ダイヤ（〜2027-10-30）',
+      priceMain: 'ソウル 片道 5,280円〜 / 台北・香港・上海',
+      priceSub: '11/19 16:00販売開始・燃油サーチャージ不要',
+      code: '',
+      conditions: [
+        '2026-11-19 16:00より2027年夏ダイヤ国際線9路線を販売開始',
+        '関空発の台北・ソウル・香港・上海線が対象',
+        '支払手数料・空港使用料等は別途必要'
+      ],
+      tags: ['アジア', '台湾', '韓国', '2027夏ダイヤ'],
+      fitAirports: ['KIX', 'NRT', 'HND'],
+      url: 'https://www.flypeach.com/',
+      urlLabel: 'Peach公式',
+      note: '2027年春〜夏以降の早期手配向け基準運賃。',
+      addedAt: '2026-11-19'
     }
   ],
 
