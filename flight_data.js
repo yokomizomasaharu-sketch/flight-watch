@@ -18,8 +18,8 @@
      tags[] / url / urlLabel / fitAirports[] / note / addedAt
    ============================================================ */
 window.FLIGHT_WATCH_DATA = {
-  version: '2026-11-18b',
-  updatedAt: '2026-11-18T19:00:00+09:00',
+  version: '2026-11-19a',
+  updatedAt: '2026-11-19T12:05:00+09:00',
   // 前回更新から新しく検出した deal の id（画面で NEW バッジが付きます）
   newIds: ['expedia-hotels-bf-2026', 'yahoo-travel-bf-2026', 'airasia-thailand-2026', 'jal-bf-2026'],
 
