@@ -18,12 +18,91 @@
      tags[] / url / urlLabel / fitAirports[] / note / addedAt
    ============================================================ */
 window.FLIGHT_WATCH_DATA = {
-  version: '2026-11-19b',
-  updatedAt: '2026-11-19T19:00:00+09:00',
+  version: '2026-11-20a',
+  updatedAt: '2026-11-20T19:00:00+09:00',
   // 前回更新から新しく検出した deal の id（画面で NEW バッジが付きます）
-  newIds: ['tigerair-couple-day-2026', 'peach-summer-2027-intl', 'expedia-hotels-bf-2026', 'yahoo-travel-bf-2026'],
+  newIds: ['starflyer-starfriday-202611', 'trinity-bf-202611', 'rakuten-travel-bf-2026'],
 
   deals: [
+    {
+      id: 'starflyer-starfriday-202611',
+      airline: 'スターフライヤー',
+      color: '#111111',
+      title: '11月STARFRIDAY（ブラックフライデー特別企画）',
+      kind: 'sale',
+      product: 'package',
+      area: 'domestic',
+      start: '2026-11-20T00:00:00+09:00',
+      end: '2026-11-30T23:54:00+09:00',
+      travel: '国内DP 2026-12-01〜2027-03-31／北九州〜台北 2026-12-01〜2027-03-27',
+      priceMain: '国内DP最大15,000円OFF / 北九州−台北 片道2,000円OFF',
+      priceSub: '国際線クーポンは11/27まで・先着100名限定',
+      code: 'SFDBLK26NOV2',
+      codeNote: '北九州〜台北線（片道2,000円／台北発400TWD引き）用プロモコード',
+      conditions: [
+        '国内線全路線 公式ダイナミックパッケージ：最大15,000円OFF（11/20〜11/30 23:54、枚数限定）',
+        '北九州〜台北線：先着100名限定（11/20〜11/27）',
+        'STAR LINK会員・一般ともに利用可'
+      ],
+      tags: ['スターフライヤー', '国内DP', '台北'],
+      fitAirports: ['HND', 'KIX', 'FUK', 'KKJ'],
+      url: 'https://www.starflyer.jp/',
+      urlLabel: 'スターフライヤー公式',
+      note: '国内DP最大15,000円OFFは推し活や帰省の航空券＋宿に活用可能。',
+      addedAt: '2026-11-20'
+    },
+    {
+      id: 'trinity-bf-202611',
+      airline: 'トリニティ航空（旧ティーウェイ）',
+      color: '#d9272e',
+      title: 'ブラックフライデー（2月〜10月搭乗＆欧州経由便）',
+      kind: 'sale',
+      product: 'flight',
+      area: 'europe',
+      start: '2026-11-20T10:00:00+09:00',
+      end: '2026-11-30T23:59:00+09:00',
+      travel: '搭乗 2027-02-01〜2027-10-30（一部除外日あり）',
+      priceMain: '中部−パリ/ローマ/バルセロナ 87,159円〜 / 関空−ソウル 21,950円〜',
+      priceSub: '往復3,000円引クーポン併用可・燃油諸税込',
+      code: 'NOV26',
+      codeNote: '韓国直行3〜10%OFF・韓国経由長距離6〜20%OFF（先着順）',
+      conditions: [
+        '販売期間：2026-11-20 10:00〜11-30（予定数到達で早期終了）',
+        '韓国直行は往復3,000円割引クーポンあり（会員IDにつき1回）',
+        '1月までの直近搭乗は同時開催の「11月ラスト トリどきセール」対象'
+      ],
+      tags: ['欧州', '韓国', '関空発', 'コードあり'],
+      fitAirports: ['KIX', 'NGO', 'NRT', 'FUK'],
+      url: 'https://www.twayair.com/',
+      urlLabel: 'トリニティ航空公式',
+      note: '春以降の欧州経由や関空〜ソウルを安く狙う候補。',
+      addedAt: '2026-11-20'
+    },
+    {
+      id: 'rakuten-travel-bf-2026',
+      airline: '楽天トラベル',
+      color: '#bf0000',
+      title: '楽天トラベル BLACK FRIDAY',
+      kind: 'sale',
+      product: 'hotel',
+      area: 'domestic',
+      start: '2026-11-19T10:00:00+09:00',
+      end: '2026-12-01T09:59:00+09:00',
+      travel: '対象プラン・クーポンにより異なる',
+      priceMain: '国内ホテル最大30%OFF / 海外最大5万円OFF',
+      priceSub: '交通＋宿 最大7,500円OFFクーポンも配布',
+      code: '',
+      conditions: [
+        '開催期間：2026-11-19 10:00〜12-01 09:59',
+        '国内宿・楽パック（交通＋宿）・海外旅行の各種クーポンあり'
+      ],
+      tags: ['ホテル', '交通＋宿', '海外旅行'],
+      fitAirports: ['KIX', 'ITM', 'HND', 'NRT'],
+      url: 'https://travel.rakuten.co.jp/special/blackfriday/',
+      urlLabel: '楽天トラベル 特設ページ',
+      note: '東京遠征や海外ホテルの比較用。',
+      addedAt: '2026-11-20'
+    },
     {
       id: 'jal-bf-2026',
       airline: 'JAL',
