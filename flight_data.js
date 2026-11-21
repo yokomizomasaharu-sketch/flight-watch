@@ -18,12 +18,37 @@
      tags[] / url / urlLabel / fitAirports[] / note / addedAt
    ============================================================ */
 window.FLIGHT_WATCH_DATA = {
-  version: '2026-11-20a',
-  updatedAt: '2026-11-20T19:00:00+09:00',
+  version: '2026-11-21a',
+  updatedAt: '2026-11-21T12:05:00+09:00',
   // 前回更新から新しく検出した deal の id（画面で NEW バッジが付きます）
-  newIds: ['starflyer-starfriday-202611', 'trinity-bf-202611', 'rakuten-travel-bf-2026'],
+  newIds: ['china-airlines-kix-bf-202611'],
 
   deals: [
+    {
+      id: 'china-airlines-kix-bf-202611',
+      airline: 'チャイナエアライン（中華航空）',
+      color: '#c8102e',
+      title: '関空発 ブラックフライデーセール（最大15%OFF）',
+      kind: 'sale',
+      product: 'flight',
+      area: 'taiwan',
+      start: '2026-11-20T00:00:00+09:00',
+      end: '2026-12-10T23:59:00+09:00',
+      travel: '台湾・アジア・欧州・北米 〜2027-03-31／オセアニア 〜2027-05-31',
+      priceMain: '関空⇄台北・高雄 片道18,500円〜（最大15%OFF）',
+      priceSub: '燃油サーチャージ・空港諸税別（台湾乗継で欧州・東南アジアも対象）',
+      conditions: [
+        '販売期間：〜2026年12月10日(木)',
+        '対象：関西空港発 台湾直行便および台北乗継便（東南アジア・欧州・北米・オセアニア）',
+        'フルサービスキャリアのため受託手荷物・機内食込みの比較対象に有効'
+      ],
+      tags: ['関空発', '台湾', 'FSC', 'ブラックフライデー'],
+      fitAirports: ['KIX', 'TPE', 'KHH'],
+      url: 'https://flights.china-airlines.com/ja-jp/osa_blackfriday_promotion',
+      urlLabel: 'チャイナエアライン公式セール',
+      note: '関空発台湾直行および台北経由便が最大15%OFF。2月〜3月春節明けの渡航も対象。',
+      addedAt: '2026-11-21'
+    },
     {
       id: 'starflyer-starfriday-202611',
       airline: 'スターフライヤー',
